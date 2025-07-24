@@ -1,0 +1,24 @@
+{
+	"name": "FTVA MAMS ETL",
+	"dockerComposeFile": "../docker-compose.yml",
+	"service": "ftva_data",
+	"workspaceFolder": "/home/ftva_data/project",
+	"customizations": {
+			"vscode": {
+					"extensions": [
+							"ms-python.python",
+							"ms-python.black-formatter",
+							"ms-python.flake8"
+					],
+					"settings": {
+							"editor.formatOnSave": true,
+							"python.analysis.typeCheckingMode": "standard",
+							"python.editor.defaultFormatter": "ms-python.black-formatter",
+					"flake8.args": [
+									"--max-line-length=100",
+									"--extend-ignore=E203"
+							]
+					}
+			}
+	}
+}
