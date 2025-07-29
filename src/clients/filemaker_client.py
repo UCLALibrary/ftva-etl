@@ -71,7 +71,9 @@ class FilemakerClient:
         )
         return records
 
-    def get_fields(self, fm_record: Record, field_list: list[str] = None) -> dict:
+    def get_fields(
+        self, fm_record: Record, field_list: list[str] | None = None
+    ) -> dict:
         """Gets the provided specific fields from a Filemaker Record instance.
 
         :param Record fm_record: A fmrest Record instance.
