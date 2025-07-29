@@ -1,8 +1,8 @@
 {
 	"name": "FTVA MAMS ETL",
 	"dockerComposeFile": "../docker-compose.yml",
-	"service": "ftva_data",
-	"workspaceFolder": "/home/ftva_data/project",
+	"service": "ftva_etl",
+	"workspaceFolder": "/home/ftva_etl/project",
 	"customizations": {
 			"vscode": {
 					"extensions": [
