@@ -5,9 +5,9 @@ from io import BytesIO
 
 
 class AlmaSRUClient:
-    def __init__(self, sru_url: str) -> None:
-        # TODO: Added this for reference, callers will set this.
-        # "https://ucla.alma.exlibrisgroup.com/view/sru/01UCS_LAL"
+    def __init__(
+        self, sru_url: str = "https://ucla.alma.exlibrisgroup.com/view/sru/01UCS_LAL"
+    ) -> None:
         self._SRU_URL = sru_url
         # For our purposes, for now, hard-code these.
         self._SRU_DEFAULT_PARAMETERS = {
