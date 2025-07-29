@@ -1,9 +1,5 @@
-# alma_api_client must be installed from the GitHub repository.
-# This also brings in pymarc, for MARC records.
-git+https://github.com/UCLALibrary/alma-api-client
-# For Excel conversion
-pandas==2.2.3
-openpyxl==3.1.5
+requests==2.32.4
+pymarc==5.3.1
 # For NLP
 spacy==3.8.7
 # Latest matching en_core_web_md (medium) model to match spacy 3.8.7
