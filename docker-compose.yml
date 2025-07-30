@@ -1,0 +1,8 @@
+services:
+  ftva_etl:
+    build: .
+    # tty: true
+    volumes: 
+      - .:/home/ftva_etl/project
+    # Keep the container running until stopped via docker compose.
+    command: "sleep infinity"
