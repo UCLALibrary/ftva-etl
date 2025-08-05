@@ -5,6 +5,8 @@ from .utils import parse_date, strip_whitespace_and_punctuation
 # for type hinting
 from spacy.language import Language
 
+# Code which extracts data from a NARC record.
+
 
 # region Dates
 def get_date(bib_record: Record) -> str:
@@ -298,7 +300,7 @@ def get_title_info(bib_record: Record) -> dict:
 # endregion
 
 
-# region Record ID
+# region Record IDs
 def get_record_id(marc_record: Record) -> str:
     """Extract the record id from the MARC record. Applies to
     any type of MARC record, since all should have this in 001 field.

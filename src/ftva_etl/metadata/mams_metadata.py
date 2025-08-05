@@ -12,18 +12,28 @@ from .marc import (
 )
 
 
-def get_mams_json(
+def get_mams_metadata(
     bib_record: Pymarc_Record, filemaker_record: FM_Record, digitaL_data_record: dict
 ) -> dict:
-    # return json for the provided record only;
-    # caller is responsible for managing multiple records.
+    """Generate JSON metadata for ingest into the FTVA MAMS.
+
+    :param bib_record: A pymarc record, expected to contain bibliographic data.
+    :param filemaker_record: A fmrest filemaker record.
+    :param digital_data_record: A dict containing an FTVA digital data record.
+    :return asset: A dict of metadata combined from the input records.
+    """
 
     # Load spacy model for NER
-    # TODO: Support use of a custom model, if needed
+    # TODO: Support use of a custom model, if needed?
+    # Not sure yet where this should be loaded, or what performance impact
+    # may be for batch processing.
     nlp_model = spacy.load("en_core_web_md")
 
+    # This gets a collection of titles which will be unpacked later.
     titles = get_title_info(bib_record)
-    asset = {
+
+    # Get the rest of the data and prepare it for return.
+    metadata = {
         "alma_mms_id": get_bib_id(bib_record),
         "inventory_id": get_inventory_id(filemaker_record),
         "dd_record_id": get_dd_record_id(digitaL_data_record),
@@ -35,4 +45,4 @@ def get_mams_json(
         "file_name": get_file_name(digitaL_data_record),
     }
 
-    return asset
+    return metadata
