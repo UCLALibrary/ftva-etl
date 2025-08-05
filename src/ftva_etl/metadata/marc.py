@@ -6,6 +6,7 @@ from .utils import parse_date, strip_whitespace_and_punctuation
 from spacy.language import Language
 
 
+# region Dates
 def get_date(bib_record: Record) -> str:
     """Extract and format release_broadcast_date from a MARC bib record.
 
@@ -36,6 +37,10 @@ def _get_date_from_bib(bib_record: Record) -> str:
     return ""
 
 
+# endregion
+
+
+# region Creators
 def _get_creator_info_from_bib(bib_record: Record) -> list:
     """Extract creators from the MARC bib record.
 
@@ -106,6 +111,10 @@ def get_creators(bib_record: Record, model: Language) -> list:
     return parsed_creators
 
 
+# endregion
+
+
+# region Languages
 def _get_language_map(file_path: str) -> dict:
     """Load the language map from a file.
 
@@ -166,6 +175,10 @@ def get_language_name(bib_record: Record) -> str:
     return language_name
 
 
+# endregion
+
+
+# region Titles
 def _get_main_title_from_bib(bib_record: Record) -> str:
     """Extract the main title from a MARC bib record.
 
@@ -282,6 +295,10 @@ def get_title_info(bib_record: Record) -> dict:
     return titles
 
 
+# endregion
+
+
+# region Record ID
 def get_record_id(marc_record: Record) -> str:
     """Extract the record id from the MARC record. Applies to
     any type of MARC record, since all should have this in 001 field.
@@ -291,3 +308,6 @@ def get_record_id(marc_record: Record) -> str:
     """
     field_001 = marc_record.get("001")
     return field_001.value() if field_001 else ""
+
+
+# endregion
