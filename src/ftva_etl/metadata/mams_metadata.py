@@ -1,5 +1,7 @@
 import spacy
-from pymarc import Record
+from fmrest.record import Record as FM_Record
+from pymarc import Record as Pymarc_Record
+from .filemaker import get_inventory_id, get_inventory_number
 from .marc import (
     get_creators,
     get_date,
@@ -9,7 +11,7 @@ from .marc import (
 )
 
 
-def get_mams_json(bib_record: Record, inventory_number: str) -> dict:
+def get_mams_json(bib_record: Pymarc_Record, filemaker_record: FM_Record) -> dict:
     # return json for the provided record only;
     # caller is responsible for managing multiple records.
 
@@ -20,7 +22,8 @@ def get_mams_json(bib_record: Record, inventory_number: str) -> dict:
     titles = get_title_info(bib_record)
     asset = {
         "alma_mms_id": get_record_id(bib_record),
-        "inventory_number": inventory_number,
+        "inventory_id": get_inventory_id(filemaker_record),
+        "inventory_number": get_inventory_number(filemaker_record),
         "release_broadcast_date": get_date(bib_record),
         "creator": get_creators(bib_record, nlp_model),
         "language": get_language_name(bib_record),
