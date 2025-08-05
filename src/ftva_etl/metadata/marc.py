@@ -154,7 +154,7 @@ def get_language_name(bib_record: Record) -> str:
     # Load language mapping data.
     # TODO: should this be hard-coded? We'll only have 1;
     # regenerate it if missing?
-    language_map = _get_language_map("../language_map.json")
+    language_map = _get_language_map("../data/language_map.json")
 
     language_code = _get_language_code_from_bib(bib_record)
     language_name = language_map.get(language_code, "")
