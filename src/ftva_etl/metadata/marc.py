@@ -310,4 +310,14 @@ def get_record_id(marc_record: Record) -> str:
     return field_001.value() if field_001 else ""
 
 
+def get_bib_id(marc_record: Record) -> str:
+    """Wrapper for get_record_id, in case callers need to work with both
+    bibliographic and holdings MARC records.
+
+    :param marc_record: Pymarc Record object
+    :return record_id: The MARC record id.
+    """
+    return get_record_id(marc_record)
+
+
 # endregion
