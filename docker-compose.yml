@@ -6,3 +6,6 @@ services:
       - .:/home/ftva_etl/project
     # Keep the container running until stopped via docker compose.
     command: "sleep infinity"
+    extra_hosts:
+      # For access to host's other network resources, like Django applicatoin
+      - "host.docker.internal:host-gateway"
