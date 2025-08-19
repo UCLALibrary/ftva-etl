@@ -1,7 +1,7 @@
 import spacy
 from fmrest.record import Record as FM_Record
 from pymarc import Record as Pymarc_Record
-from .digital_data import get_dd_record_id, get_file_name
+from .digital_data import get_file_name, get_uuid
 from .filemaker import get_inventory_id, get_inventory_number
 from .marc import (
     get_bib_id,
@@ -10,16 +10,21 @@ from .marc import (
     get_language_name,
     get_title_info,
 )
+from uuid import UUID
 
 
 def get_mams_metadata(
-    bib_record: Pymarc_Record, filemaker_record: FM_Record, digitaL_data_record: dict
+    bib_record: Pymarc_Record,
+    filemaker_record: FM_Record,
+    digitaL_data_record: dict,
+    match_asset_uuid: UUID = None,
 ) -> dict:
     """Generate JSON metadata for ingest into the FTVA MAMS.
 
     :param bib_record: A pymarc record, expected to contain bibliographic data.
     :param filemaker_record: A fmrest filemaker record.
     :param digital_data_record: A dict containing an FTVA digital data record.
+    :param match_asset_uuid: A UUID to match a track to an asset, if one exists.
     :return asset: A dict of metadata combined from the input records.
     """
 
@@ -34,15 +39,19 @@ def get_mams_metadata(
 
     # Get the rest of the data and prepare it for return.
     metadata = {
-        "alma_mms_id": get_bib_id(bib_record),
+        "alma_bib_id": get_bib_id(bib_record),
         "inventory_id": get_inventory_id(filemaker_record),
-        "dd_record_id": get_dd_record_id(digitaL_data_record),
+        "uuid": get_uuid(digitaL_data_record),
         "inventory_number": get_inventory_number(filemaker_record),
+        "creators": get_creators(bib_record, nlp_model),
         "release_broadcast_date": get_date(bib_record),
-        "creator": get_creators(bib_record, nlp_model),
         "language": get_language_name(bib_record),
-        **titles,
         "file_name": get_file_name(digitaL_data_record),
+        **titles,
     }
+
+    # If a match_asset_uuid is provided for a track, add it to the metadata record
+    if match_asset_uuid:
+        metadata["match_asset"] = match_asset_uuid
 
     return metadata
