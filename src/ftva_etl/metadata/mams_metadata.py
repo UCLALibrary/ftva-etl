@@ -10,21 +10,20 @@ from .marc import (
     get_language_name,
     get_title_info,
 )
-from uuid import UUID
 
 
 def get_mams_metadata(
     bib_record: Pymarc_Record,
     filemaker_record: FM_Record,
     digitaL_data_record: dict,
-    match_asset_uuid: UUID = None,
+    match_asset_uuid: str | None = None,
 ) -> dict:
     """Generate JSON metadata for ingest into the FTVA MAMS.
 
     :param bib_record: A pymarc record, expected to contain bibliographic data.
     :param filemaker_record: A fmrest filemaker record.
     :param digital_data_record: A dict containing an FTVA digital data record.
-    :param match_asset_uuid: A UUID to match a track to an asset, if one exists.
+    :param match_asset_uuid: A string representation of an asset's UUID. Defaults to None.
     :return asset: A dict of metadata combined from the input records.
     """
 
