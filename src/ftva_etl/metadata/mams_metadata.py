@@ -1,7 +1,7 @@
 import spacy
 from fmrest.record import Record as FM_Record
 from pymarc import Record as Pymarc_Record
-from .digital_data import get_file_name, get_uuid
+from .digital_data import get_file_name, get_uuid, get_media_type
 from .filemaker import get_inventory_id, get_inventory_number
 from .marc import (
     get_bib_id,
@@ -15,7 +15,7 @@ from .marc import (
 def get_mams_metadata(
     bib_record: Pymarc_Record,
     filemaker_record: FM_Record,
-    digitaL_data_record: dict,
+    digital_data_record: dict,
     match_asset_uuid: str | None = None,
 ) -> dict:
     """Generate JSON metadata for ingest into the FTVA MAMS.
@@ -40,12 +40,13 @@ def get_mams_metadata(
     metadata = {
         "alma_bib_id": get_bib_id(bib_record),
         "inventory_id": get_inventory_id(filemaker_record),
-        "uuid": get_uuid(digitaL_data_record),
+        "uuid": get_uuid(digital_data_record),
         "inventory_number": get_inventory_number(filemaker_record),
         "creators": get_creators(bib_record, nlp_model),
         "release_broadcast_date": get_date(bib_record),
         "language": get_language_name(bib_record),
-        "file_name": get_file_name(digitaL_data_record),
+        "file_name": get_file_name(digital_data_record),
+        "media_type": get_media_type(digital_data_record),
         **titles,
     }
 
