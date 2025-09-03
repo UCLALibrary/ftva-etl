@@ -1,7 +1,7 @@
 import spacy
 from fmrest.record import Record as FM_Record
 from pymarc import Record as Pymarc_Record
-from .digital_data import get_file_name, get_uuid, get_media_type
+from .digital_data import get_file_name, get_uuid, get_media_type, get_dcp_info
 from .filemaker import get_inventory_id, get_inventory_number
 from .marc import (
     get_bib_id,
@@ -36,6 +36,8 @@ def get_mams_metadata(
     # This gets a collection of titles which will be unpacked later.
     titles = get_title_info(bib_record)
 
+    dcp_info = get_dcp_info(digital_data_record)
+
     # Get the rest of the data and prepare it for return.
     metadata = {
         "alma_bib_id": get_bib_id(bib_record),
@@ -50,8 +52,13 @@ def get_mams_metadata(
         **titles,
     }
 
-    # If a match_asset_uuid is provided for a track, add it to the metadata record
+    # If a match_asset_uuid is provided for a track, add it to the metadata record.
     if match_asset_uuid:
         metadata["match_asset"] = match_asset_uuid
+
+    # If DCP info is present, update the metadata record with it.
+    # Note that `file_name` will be overwritten for DCPs.
+    if dcp_info is not None:
+        metadata.update(dcp_info)
 
     return metadata
