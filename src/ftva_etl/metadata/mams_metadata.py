@@ -58,7 +58,7 @@ def get_mams_metadata(
 
     # If DCP info is present, update the metadata record with it.
     # Note that `file_name` will be overwritten for DCPs.
-    if dcp_info is not None:
+    if dcp_info:
         metadata.update(dcp_info)
 
     return metadata
