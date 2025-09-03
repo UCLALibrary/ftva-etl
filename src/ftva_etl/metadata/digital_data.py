@@ -17,3 +17,15 @@ def get_uuid(dd_record: dict) -> UUID | str:
 
 def get_media_type(dd_record: dict) -> str:
     return dd_record.get("media_type", "")
+
+
+def get_dcp_info(dd_record: dict) -> dict | None:
+    dcp_info = {}
+    file_type = dd_record.get("file_type", "")
+    if file_type == "DCP":
+        dcp_info["asset_type"] = "Exhibition Copy"
+        dcp_info["file_name"] = ""
+        dcp_info["folder_name"] = dd_record.get("file_folder_name", "")
+        dcp_info["sub_folder_name"] = dd_record.get("sub_folder_name", "")
+        return dcp_info
+    return None
