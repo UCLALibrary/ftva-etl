@@ -2,10 +2,6 @@ from unittest import TestCase
 from src.ftva_etl.metadata.marc import (
     get_language_name,
     get_title_info,
-    _get_main_title_from_bib,
-    _get_alternative_titles_from_bib,
-    _get_series_title_from_bib,
-    _get_episode_title_from_bib,
 )
 from pymarc import Record, Field, Indicators, Subfield
 
@@ -92,153 +88,131 @@ class TestMarcTitlesRegion(TestCase):
     """Test the titles region of the MARC metadata module."""
 
     def setUp(self):
-        self.minimal_bib_record = _get_minimal_bib_record()
+        minimal_bib_record = _get_minimal_bib_record()
+        # Remove the 245 field, so it can be explicitly added in each test.
+        field_245 = minimal_bib_record.get("245")
+        minimal_bib_record.remove_field(field_245)
+        self.minimal_bib_record = minimal_bib_record
 
-    def test_get_main_title_minimal_record(self):
+    def test_spec_case_1(self):
+        """Test the spec case where the main title, name of part, and number of part are present."""
         record = self.minimal_bib_record
-        main_title = _get_main_title_from_bib(record)
-        self.assertEqual(main_title, "F245a")
-
-    def test_get_alternative_titles_valid_indicators(self):
-        record = self.minimal_bib_record
-
-        # Valid indicators are 0 or 2 or 3 followed by whitespace
-        field_246_1 = Field(
-            tag="246",
-            indicators=Indicators("0", " "),
-            subfields=[
-                Subfield(code="a", value="foo"),
-            ],
-        )
-        field_246_2 = Field(
-            tag="246",
-            indicators=Indicators("2", " "),
-            subfields=[
-                Subfield(code="a", value="bar"),
-            ],
-        )
-        field_246_3 = Field(
-            tag="246",
-            indicators=Indicators("3", " "),
-            subfields=[
-                Subfield(code="a", value="baz"),
-            ],
-        )
-        record.add_field(field_246_1)
-        record.add_field(field_246_2)
-        record.add_field(field_246_3)
-        alternative_titles = _get_alternative_titles_from_bib(record)
-        self.assertListEqual(alternative_titles, ["foo", "bar", "baz"])
-
-    def test_get_alternative_titles_invalid_indicators(self):
-        record = self.minimal_bib_record
-
-        # Trying different invalid indicator combos
-        field_246_1 = Field(
-            tag="246",
-            indicators=Indicators("0", "1"),
-            subfields=[
-                Subfield(code="a", value="foo"),
-            ],
-        )
-        field_246_2 = Field(
-            tag="246",
-            indicators=Indicators("5", " "),
-            subfields=[
-                Subfield(code="a", value="bar"),
-            ],
-        )
-        field_246_3 = Field(
-            tag="246",
-            indicators=Indicators(" ", " "),
-            subfields=[
-                Subfield(code="a", value="baz"),
-            ],
-        )
-        record.add_field(field_246_1)
-        record.add_field(field_246_2)
-        record.add_field(field_246_3)
-        alternative_titles = _get_alternative_titles_from_bib(record)
-        self.assertListEqual(alternative_titles, [])
-
-    def test_get_series_title(self):
-        record = self.minimal_bib_record
-        field_245 = record.get("245")
-
-        main_title = record.get_fields("245")[0].get_subfields("a")[0]
-        series_subfield_codes = ["n", "p", "g"]  # g should result in ""
-        for code in series_subfield_codes:
-            with self.subTest(code=code):
-                if field_245:  # this is just to avoid linting errors
-                    field_245.add_subfield(code=code, value=f"F245{code}")
-                    series_title = _get_series_title_from_bib(record, main_title)
-                    # If 245 $n or 245 $p exists on record,
-                    # series title should be main title (245 $a),
-                    # else it should be an empty string.
-                    if code in ["n", "p"]:  #
-                        self.assertEqual(series_title, main_title)
-                    else:
-                        self.assertEqual(series_title, "")
-                    field_245.delete_subfield(code=code)
-
-    def test_get_episode_title(self):
-        record = self.minimal_bib_record
-        field_245 = record.get("245")
-        if field_245:  # to avoid linting error
-            field_245.add_subfield(code="n", value="Episode 001")
-            field_245.add_subfield(
-                code="p",
-                value="Pilot--unedited footage. Pam Jennings interviews Marlon Riggs",
+        record.add_field(
+            Field(
+                tag="245",
+                indicators=Indicators("0", "0"),
+                subfields=[
+                    Subfield(code="a", value="Main Title"),
+                    Subfield(code="p", value="Name of Part"),
+                    Subfield(code="n", value="Number of Part"),
+                ],
             )
-
-        field_246 = Field(tag="246", subfields=[Subfield(code="n", value="F246n")])
-        record.add_field(field_246)
-
-        episode_title = _get_episode_title_from_bib(record)
-
-        # Expected output comes from specs.
-        # Specs indicate that 245 $p should come first and be joined with 245 $n and 246 $n
-        # if they exist, using ". " as delimiter
-        expected_output = (
-            "Pilot--unedited footage. Pam Jennings interviews Marlon Riggs. "
-            "Episode 001. "
-            "F246n"
         )
-        self.assertEqual(episode_title, expected_output)
-
-    def test_get_title_info(self):
-        # Testing the main coordinating function
-        # that calls all the smaller title-specific methods.
-
-        record = self.minimal_bib_record
-        field_245 = record.get("245")
-        if field_245:  # to avoid linting error
-            field_245.add_subfield(code="n", value="F245n")
-            field_245.add_subfield(code="p", value="F245p")
-
-        field_246_1 = Field(
-            tag="246",
-            indicators=Indicators("0", " "),  # indicators are valid
-            subfields=[
-                Subfield(code="a", value="F246a_1"),
-                Subfield(code="n", value="F246n_1"),
-            ],
-        )
-        field_246_2 = Field(
-            tag="246",
-            indicators=Indicators("2", " "),  # indicators are valid
-            subfields=[
-                Subfield(code="a", value="F246a_2"),
-                Subfield(code="n", value="F246n_2"),
-            ],
-        )
-        record.add_field(field_246_1, field_246_2)
-
-        expected_output = {
-            "title": "F245a F245p. F245n. F246n_1. F246n_2",
-            "series_title": "F245a",  # main title from minimal record
-            "alternative_titles": ["F246a_1", "F246a_2"],
-            "episode_title": "F245p. F245n. F246n_1. F246n_2",
-        }
         titles = get_title_info(record)
-        self.assertEqual(titles, expected_output)
+        expected_result = {
+            "series_title": "Main Title. Name of Part. Number of Part",
+            "episode_title": "Name of Part. Number of Part",
+        }
+        self.assertDictEqual(titles, expected_result)
+
+    def test_spec_case_2(self):
+        """Test the spec case where the main title and name of part are present,
+        but the number of part is not.
+        """
+        record = self.minimal_bib_record
+        record.add_field(
+            Field(
+                tag="245",
+                indicators=Indicators("0", "0"),
+                subfields=[
+                    Subfield(code="a", value="Main Title"),
+                    Subfield(code="p", value="Name of Part"),
+                ],
+            )
+        )
+        titles = get_title_info(record)
+        expected_result = {
+            "series_title": "Main Title. Name of Part",
+            "episode_title": "Name of Part",
+        }
+        self.assertDictEqual(titles, expected_result)
+
+    def test_spec_case_3(self):
+        """Test the spec case where the main title and number of part are present,
+        but the name of part is not.
+        """
+        record = self.minimal_bib_record
+        record.add_field(
+            Field(
+                tag="245",
+                indicators=Indicators("0", "0"),
+                subfields=[
+                    Subfield(code="a", value="Main Title"),
+                    Subfield(code="n", value="Number of Part"),
+                ],
+            )
+        )
+        titles = get_title_info(record)
+        expected_result = {
+            "title": "Main Title. Number of Part",
+        }
+        self.assertDictEqual(titles, expected_result)
+
+    def test_spec_case_4(self):
+        """Test the spec case where the main title is present,
+        but the name of part and number of part are not.
+        """
+        record = self.minimal_bib_record
+        record.add_field(
+            Field(
+                tag="245",
+                indicators=Indicators("0", "0"),
+                subfields=[
+                    Subfield(code="a", value="Main Title"),
+                ],
+            )
+        )
+        titles = get_title_info(record)
+        expected_result = {
+            "title": "Main Title",
+        }
+        self.assertDictEqual(titles, expected_result)
+
+    def test_error_condition_no_main_title(self):
+        """Test the error condition where there is no main title."""
+        record = self.minimal_bib_record
+        record.add_field(
+            Field(
+                tag="245",
+                indicators=Indicators("0", "0"),
+            )
+        )
+        with self.assertRaises(ValueError):
+            get_title_info(record)
+
+    def test_error_condition_title_statement(self):
+        """Test the error condition where there is no title statement."""
+        record = Record()  # Totally empty record
+        with self.assertRaises(ValueError):
+            get_title_info(record)
+
+    def test_trailing_punctuation(self):
+        """Test trailing punctuation in the title elements."""
+        record = self.minimal_bib_record
+        record.add_field(
+            Field(
+                tag="245",
+                indicators=Indicators("0", "0"),
+                subfields=[
+                    Subfield(code="a", value="Main Title /"),  # Trailing slash
+                    Subfield(code="p", value="[Name of Part]"),  # Square brackets
+                    Subfield(code="n", value="Number of Part . "),  # Trailing space
+                ],
+            )
+        )
+        titles = get_title_info(record)
+        expected_result = {
+            "series_title": "Main Title. Name of Part. Number of Part",
+            "episode_title": "Name of Part. Number of Part",
+        }
+        self.assertDictEqual(titles, expected_result)

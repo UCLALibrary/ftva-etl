@@ -185,88 +185,6 @@ def get_language_name(bib_record: Record) -> str:
 
 
 # region Titles
-def _get_main_title_from_bib(bib_record: Record) -> str:
-    """Extract the main title from a MARC bib record.
-
-    :param bib_record: Pymarc Record object containing the bib data.
-    :return: Main title string, or an empty string if not found.
-    """
-    title_field = bib_record.get("245")
-    if title_field:
-        main_title = title_field.get("a")  # 245 $a is NR, so take first item
-        if main_title:
-            return main_title
-    # TODO: LOGGING
-    # If no main title found, log a warning and return an empty string.
-    # logging.warning(f"No main title (245 $a) found in bib record {bib_record['001']}.")
-    return ""
-
-
-def _get_alternative_titles_from_bib(bib_record: Record) -> list[str]:
-    """Extract alternative titles from a MARC bib record.
-
-    :param bib_record: Pymarc Record object containing the bib data.
-    :return: A list of alternative titles, or an empty list if none found.
-    """
-    alternative_titles = []
-    alternative_titles_field = bib_record.get_fields("246")
-    for field in alternative_titles_field:
-        # Per specs, only take 246 $a if indicator1 is 0, 2, or 3 and indicator2 is empty
-        if field.indicator1 in ["0", "2", "3"] and field.indicator2 == " ":
-            alternative_titles += field.get_subfields("a")
-    return alternative_titles
-
-
-def _get_series_title_from_bib(bib_record: Record, main_title: str) -> str:
-    """Determine if record describes series, and return main title as series title if so.
-
-    :param bib_record: Pymarc Record object containing the bib data.
-    :return: The series title string, or an empty string.
-    """
-    title_field = bib_record.get("245")
-    if title_field:
-        number_of_part = title_field.get_subfields("n")
-        name_of_part = title_field.get_subfields("p")
-        if number_of_part or name_of_part:
-            return main_title  # series title is main title if 245 $n or 245 $p exist
-    return ""
-
-
-def _get_episode_title_from_bib(bib_record: Record) -> str:
-    """Extract and format episode title from a MARC bib record.
-
-    :param bib_record: Pymarc Record object containing the bib data.
-    :return: The episode title, formatted according to specs, or an empty string.
-    """
-    name_of_part = []  # Init to avoid being potentially unbound
-    number_of_part = []
-    title_field = bib_record.get("245")
-    if title_field:
-        name_of_part = title_field.get_subfields("p")
-        if name_of_part:
-            # Per specs, if there are multiple 245 $p, take the first one.
-            # Assign it as a list though, so it can be easily joined with other lists.
-            # Specs say episode titles specifically
-            # should be stripped of whitespace and punctuation.
-            name_of_part = [strip_whitespace_and_punctuation(name_of_part)[0]]
-
-        number_of_part = strip_whitespace_and_punctuation(
-            title_field.get_subfields("n")
-        )
-
-    alternative_number_of_part = []
-    alternative_titles_field = bib_record.get_fields("246")
-    if alternative_titles_field:
-        for field in alternative_titles_field:
-            alternative_number_of_part += strip_whitespace_and_punctuation(
-                field.get_subfields("n")
-            )
-
-    if name_of_part or number_of_part or alternative_number_of_part:
-        return ". ".join(name_of_part + number_of_part + alternative_number_of_part)
-    return ""
-
-
 def get_title_info(bib_record: Record) -> dict:
     """Extract title fields from a MARC bib record.
 
@@ -274,29 +192,49 @@ def get_title_info(bib_record: Record) -> dict:
     :return: A dict with available title info.
     """
     titles = {}
+    record_id = get_record_id(bib_record)  # Used for ValueError messages
 
-    main_title = _get_main_title_from_bib(bib_record)
-    alternative_titles = _get_alternative_titles_from_bib(bib_record)
-    series_title = _get_series_title_from_bib(bib_record, main_title)
-    episode_title = _get_episode_title_from_bib(bib_record)
+    title_statement = bib_record.get("245")
+    if not title_statement:
+        # No title statement (245 field) is an error condition, indicating an invalid record.
+        # Raise a ValueError to be handled by callers.
+        raise ValueError(f"No 245 field found in bib record {record_id}.")
 
-    # Alternative titles are independent of the others.
-    if alternative_titles:
-        titles["alternative_titles"] = alternative_titles
+    # Specs say to strip whitespace and punctuation from subfields,
+    # then take first item if there are multiple.
+    def _get_first_stripped(subfields: list[str]) -> str:
+        stripped = strip_whitespace_and_punctuation(subfields)
+        return stripped[0] if stripped else ""
 
-    # The unqualified title ("title") depends on others.
-    if series_title and episode_title:
-        # Concatenate them with just a space, since series title
-        # ends with punctuation (usually... possible refinement later).
-        titles["title"] = f"{series_title} {episode_title}"
-    else:
+    main_title = _get_first_stripped(title_statement.get_subfields("a"))
+    name_of_part = _get_first_stripped(title_statement.get_subfields("p"))
+    number_of_part = _get_first_stripped(title_statement.get_subfields("n"))
+
+    # Handling the spec cases in reverse order,
+    # to fail early and go from simplest to most complicated.
+    # CASE 5: No main title
+    if not main_title:
+        # No main title (245 $a) is an error condition, indicating an invalid record.
+        # Raise a ValueError to be handled by callers.
+        raise ValueError(f"No 245 $a found in bib record {record_id}.")
+
+    # CASE 4: Main title, but no name of part or number of part
+    if main_title and not name_of_part and not number_of_part:
         titles["title"] = main_title
 
-    if series_title:
-        titles["series_title"] = series_title
+    # CASE 3: Main title and number of part, but no name of part
+    if main_title and number_of_part and not name_of_part:
+        titles["title"] = ". ".join([main_title, number_of_part])
 
-    if episode_title:
-        titles["episode_title"] = episode_title
+    # CASE 2: Main title and name of part, but no number of part
+    if main_title and name_of_part and not number_of_part:
+        titles["series_title"] = ". ".join([main_title, name_of_part])
+        titles["episode_title"] = name_of_part
+
+    # CASE 1: Main title, name of part, and number of part
+    if main_title and name_of_part and number_of_part:
+        titles["series_title"] = ". ".join([main_title, name_of_part, number_of_part])
+        titles["episode_title"] = ". ".join([name_of_part, number_of_part])
 
     return titles
 
