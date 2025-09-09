@@ -1,7 +1,14 @@
 import spacy
 from fmrest.record import Record as FM_Record
 from pymarc import Record as Pymarc_Record
-from .digital_data import get_file_name, get_uuid, get_media_type, get_dcp_info
+from .digital_data import (
+    get_asset_type,
+    get_dcp_info,
+    get_dpx_info,
+    get_file_name,
+    get_media_type,
+    get_uuid,
+)
 from .filemaker import get_inventory_id, get_inventory_number
 from .marc import (
     get_bib_id,
@@ -36,8 +43,6 @@ def get_mams_metadata(
     # This gets a collection of titles which will be unpacked later.
     titles = get_title_info(bib_record)
 
-    dcp_info = get_dcp_info(digital_data_record)
-
     # Get the rest of the data and prepare it for return.
     metadata = {
         "alma_bib_id": get_bib_id(bib_record),
@@ -48,6 +53,7 @@ def get_mams_metadata(
         "release_broadcast_date": get_date(bib_record),
         "language": get_language_name(bib_record),
         "file_name": get_file_name(digital_data_record),
+        "asset_type": get_asset_type(digital_data_record),
         "media_type": get_media_type(digital_data_record),
         **titles,
     }
@@ -56,9 +62,14 @@ def get_mams_metadata(
     if match_asset_uuid:
         metadata["match_asset"] = match_asset_uuid
 
-    # If DCP info is present, update the metadata record with it.
-    # Note that `file_name` will be overwritten for DCPs.
-    if dcp_info:
-        metadata.update(dcp_info)
+    # Override some elements based on file type.
+    file_type = digital_data_record.get("file_type", "")
+    if file_type == "DCP":
+        metadata.update(get_dcp_info(digital_data_record))
+    elif file_type == "DPX":
+        metadata.update(get_dpx_info(digital_data_record))
+    else:
+        # No special action needed
+        pass
 
     return metadata
