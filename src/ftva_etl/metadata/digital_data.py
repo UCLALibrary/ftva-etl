@@ -15,6 +15,10 @@ def get_uuid(dd_record: dict) -> UUID | str:
     return dd_record.get("uuid", "")
 
 
+def get_asset_type(dd_record: dict) -> str:
+    return dd_record.get("asset_type", "")
+
+
 def get_media_type(dd_record: dict) -> str:
     return dd_record.get("media_type", "")
 

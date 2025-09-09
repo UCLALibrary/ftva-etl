@@ -1,7 +1,13 @@
 import spacy
 from fmrest.record import Record as FM_Record
 from pymarc import Record as Pymarc_Record
-from .digital_data import get_file_name, get_uuid, get_media_type, get_dcp_info
+from .digital_data import (
+    get_asset_type,
+    get_dcp_info,
+    get_file_name,
+    get_media_type,
+    get_uuid,
+)
 from .filemaker import get_inventory_id, get_inventory_number
 from .marc import (
     get_bib_id,
@@ -48,6 +54,7 @@ def get_mams_metadata(
         "release_broadcast_date": get_date(bib_record),
         "language": get_language_name(bib_record),
         "file_name": get_file_name(digital_data_record),
+        "asset_type": get_asset_type(digital_data_record),
         "media_type": get_media_type(digital_data_record),
         **titles,
     }
