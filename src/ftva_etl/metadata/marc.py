@@ -190,6 +190,7 @@ def get_title_info(bib_record: Record) -> dict:
 
     :param bib_record: Pymarc Record object containing the bib data.
     :return: A dict with available title info.
+    :raises ValueError: If no title statement (245 field) or main title (245$a) is found.
     """
     titles = {}
     record_id = get_record_id(bib_record)  # Used for ValueError messages
@@ -228,12 +229,18 @@ def get_title_info(bib_record: Record) -> dict:
 
     # CASE 2: Main title and name of part, but no number of part
     if main_title and name_of_part and not number_of_part:
-        titles["series_title"] = ". ".join([main_title, name_of_part])
+        # `title` is the same as `series_title` in this case
+        main_and_series_title = ". ".join([main_title, name_of_part])
+        titles["title"] = main_and_series_title
+        titles["series_title"] = main_and_series_title
         titles["episode_title"] = name_of_part
 
     # CASE 1: Main title, name of part, and number of part
     if main_title and name_of_part and number_of_part:
-        titles["series_title"] = ". ".join([main_title, name_of_part, number_of_part])
+        # `title` is the same as `series_title` in this case
+        main_and_series_title = ". ".join([main_title, name_of_part, number_of_part])
+        titles["title"] = main_and_series_title
+        titles["series_title"] = main_and_series_title
         titles["episode_title"] = ". ".join([name_of_part, number_of_part])
 
     return titles

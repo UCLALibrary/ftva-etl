@@ -110,6 +110,7 @@ class TestMarcTitlesRegion(TestCase):
         )
         titles = get_title_info(record)
         expected_result = {
+            "title": "Main Title. Name of Part. Number of Part",
             "series_title": "Main Title. Name of Part. Number of Part",
             "episode_title": "Name of Part. Number of Part",
         }
@@ -132,6 +133,7 @@ class TestMarcTitlesRegion(TestCase):
         )
         titles = get_title_info(record)
         expected_result = {
+            "title": "Main Title. Name of Part",
             "series_title": "Main Title. Name of Part",
             "episode_title": "Name of Part",
         }
@@ -212,6 +214,7 @@ class TestMarcTitlesRegion(TestCase):
         )
         titles = get_title_info(record)
         expected_result = {
+            "title": "Main Title. Name of Part. Number of Part",
             "series_title": "Main Title. Name of Part. Number of Part",
             "episode_title": "Name of Part. Number of Part",
         }
