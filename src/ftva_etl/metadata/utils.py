@@ -42,4 +42,6 @@ def strip_whitespace_and_punctuation(items: list[str]) -> list[str]:
     :param items: A list of strings to strip.
     :return: The list of strings with whitespace and punctuation stripped.
     """
-    return [item.rstrip(string.punctuation).strip() for item in items]
+    # Add space to right-strip of punctuation to handle spaces after punctuation,
+    # then explicitly strip square brackets and spaces from resulting string.
+    return [item.rstrip(string.punctuation + " ").strip("[] ") for item in items]
