@@ -111,7 +111,7 @@ class TestMarcTitlesRegion(TestCase):
         titles = get_title_info(record)
         expected_result = {
             "title": "Main Title. Name of Part. Number of Part",
-            "series_title": "Main Title. Name of Part. Number of Part",
+            "series_title": "Main Title",
             "episode_title": "Name of Part. Number of Part",
         }
         self.assertDictEqual(titles, expected_result)
@@ -134,7 +134,7 @@ class TestMarcTitlesRegion(TestCase):
         titles = get_title_info(record)
         expected_result = {
             "title": "Main Title. Name of Part",
-            "series_title": "Main Title. Name of Part",
+            "series_title": "Main Title",
             "episode_title": "Name of Part",
         }
         self.assertDictEqual(titles, expected_result)
@@ -215,7 +215,7 @@ class TestMarcTitlesRegion(TestCase):
         titles = get_title_info(record)
         expected_result = {
             "title": "Main Title. Name of Part. Number of Part",
-            "series_title": "Main Title. Name of Part. Number of Part",
+            "series_title": "Main Title",
             "episode_title": "Name of Part. Number of Part",
         }
         self.assertDictEqual(titles, expected_result)
