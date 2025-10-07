@@ -185,10 +185,12 @@ def get_language_name(bib_record: Record) -> str:
 
 
 # region Titles
-def get_title_info(bib_record: Record) -> dict:
+def get_title_info(bib_record: Record, is_series: bool = False) -> dict:
     """Extract title fields from a MARC bib record.
 
     :param bib_record: Pymarc Record object containing the bib data.
+    :param is_series: Whether the record is a series, derived from Filemaker record.
+    Defaults to False.
     :return: A dict with available title info.
     :raises ValueError: If no title statement (245 field) or main title (245$a) is found.
     """
@@ -211,21 +213,29 @@ def get_title_info(bib_record: Record) -> dict:
     name_of_part = _get_first_stripped(title_statement.get_subfields("p"))
     number_of_part = _get_first_stripped(title_statement.get_subfields("n"))
 
+    # TODO: Add logic to get `production_type` information from Filemaker record.
+
     # Handling the spec cases in reverse order,
     # to fail early and go from simplest to most complicated.
-    # CASE 5: No main title
+    # CASE 6: No main title
     if not main_title:
         # No main title (245 $a) is an error condition, indicating an invalid record.
         # Raise a ValueError to be handled by callers.
         raise ValueError(f"No 245 $a found in bib record {record_id}.")
 
-    # CASE 4: Main title, but no name of part or number of part
+    # CASE 5: Main title, but no name of part or number of part
     if main_title and not name_of_part and not number_of_part:
         titles["title"] = main_title
 
-    # CASE 3: Main title and number of part, but no name of part
-    if main_title and number_of_part and not name_of_part:
+    # CASE 4: Main title and number of part, but no name of part (for non-series)
+    if not is_series and main_title and number_of_part and not name_of_part:
         titles["title"] = ". ".join([main_title, number_of_part])
+
+    # CASE 3: Main title and name of part, but no number of part (for series)
+    if is_series and main_title and number_of_part and not name_of_part:
+        titles["title"] = ". ".join([main_title, number_of_part])
+        titles["series_title"] = main_title
+        titles["episode_title"] = number_of_part
 
     # CASE 2: Main title and name of part, but no number of part
     if main_title and name_of_part and not number_of_part:
