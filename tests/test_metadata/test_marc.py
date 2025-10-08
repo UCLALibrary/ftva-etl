@@ -314,6 +314,24 @@ class TestMarcDatesRegion(TestCase):
         }
         self.assertDictEqual(date_info, expected_result)
 
+    def test_date_264_first_indicator_not_blank(self):
+        record = self.minimal_bib_record
+        # Add a 264 field with first indicator not blank, which should be ignored
+        record.add_field(
+            Field(
+                tag="264",
+                indicators=Indicators("1", "2"),
+                subfields=[
+                    Subfield(code="c", value="2023"),
+                ],
+            )
+        )
+        date_info = get_date_info(record)
+        expected_result = {
+            "release_broadcast_date": "",
+        }
+        self.assertDictEqual(date_info, expected_result)
+
     def test_date_264_indicator_priority(self):
         record = self.minimal_bib_record
         # Add a 264 field with second indicator 2 (highest priority)
