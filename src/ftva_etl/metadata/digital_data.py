@@ -56,3 +56,12 @@ def get_dpx_info(dd_record: dict) -> dict:
         "file_name": "",
         "folder_name": get_folder_name(dd_record),
     }
+
+
+def get_audio_class(dd_record: dict) -> str:
+    """Return the audio class from a Digital Data record.
+
+    :param dd_record: A Digital Data record
+    :return: The audio class, or an empty string if not present.
+    """
+    return dd_record.get("audio_class", "")

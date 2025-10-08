@@ -18,8 +18,15 @@ def parse_date(date_string: str) -> str:
     date_string = date_string.rstrip(".,;:!?")
     date_string = date_string.strip()
 
+    # If date_string is just a year (i.e. 4 digits), keep it as is
+    if len(date_string) == 4 and date_string.isdigit():
+        formatted_date = date_string
+        if in_brackets:
+            formatted_date = f"[{formatted_date}]"
+        return formatted_date
+
     # Try to parse the date string using dateutil.parser
-    # TODO: Add handling for underspecified dates, e.g. "2023" or "April 2023"
+    # TODO: Handle dates with only month and year?
     try:
         parsed_date = dateutil.parser.parse(date_string)
         # Format the date as YYYY-MM-DD

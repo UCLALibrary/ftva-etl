@@ -8,12 +8,13 @@ from .digital_data import (
     get_file_name,
     get_media_type,
     get_uuid,
+    get_audio_class,
 )
 from .filemaker import get_inventory_id, get_inventory_number, is_series_production_type
 from .marc import (
     get_bib_id,
     get_creators,
-    get_date,
+    get_date_info,
     get_language_name,
     get_title_info,
 )
@@ -46,6 +47,9 @@ def get_mams_metadata(
     # This gets a collection of titles which will be unpacked later.
     titles = get_title_info(bib_record, is_series)
 
+    # Get the date and qualifier.
+    date_info = get_date_info(bib_record)
+
     # Get the rest of the data and prepare it for return.
     metadata = {
         "alma_bib_id": get_bib_id(bib_record),
@@ -53,12 +57,13 @@ def get_mams_metadata(
         "uuid": get_uuid(digital_data_record),
         "inventory_number": get_inventory_number(filemaker_record),
         "creators": get_creators(bib_record, nlp_model),
-        "release_broadcast_date": get_date(bib_record),
         "language": get_language_name(bib_record),
         "file_name": get_file_name(digital_data_record),
         "asset_type": get_asset_type(digital_data_record),
         "media_type": get_media_type(digital_data_record),
+        "audio_class": get_audio_class(digital_data_record),
         **titles,
+        **date_info,
     }
 
     # If a match_asset_uuid is provided for a track, add it to the metadata record.
