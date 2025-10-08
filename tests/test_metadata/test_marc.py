@@ -141,7 +141,7 @@ class TestMarcTitlesRegion(TestCase):
 
     def test_spec_case_3(self):
         """Test the spec case where the main title and number of part are present,
-        but the name of part is not.
+        but the name of part is not, and Filemaker indicates that the record is a series.
         """
         record = self.minimal_bib_record
         record.add_field(
@@ -154,13 +154,36 @@ class TestMarcTitlesRegion(TestCase):
                 ],
             )
         )
-        titles = get_title_info(record)
+        titles = get_title_info(record, is_series=True)
+        expected_result = {
+            "title": "Main Title. Number of Part",
+            "series_title": "Main Title",
+            "episode_title": "Number of Part",
+        }
+        self.assertDictEqual(titles, expected_result)
+
+    def test_spec_case_4(self):
+        """Test the spec case where the main title and number of part are present,
+        but the name of part is not, and Filemaker indicates that the record is not a series.
+        """
+        record = self.minimal_bib_record
+        record.add_field(
+            Field(
+                tag="245",
+                indicators=Indicators("0", "0"),
+                subfields=[
+                    Subfield(code="a", value="Main Title"),
+                    Subfield(code="n", value="Number of Part"),
+                ],
+            )
+        )
+        titles = get_title_info(record, is_series=False)
         expected_result = {
             "title": "Main Title. Number of Part",
         }
         self.assertDictEqual(titles, expected_result)
 
-    def test_spec_case_4(self):
+    def test_spec_case_5(self):
         """Test the spec case where the main title is present,
         but the name of part and number of part are not.
         """

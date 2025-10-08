@@ -9,7 +9,7 @@ from .digital_data import (
     get_media_type,
     get_uuid,
 )
-from .filemaker import get_inventory_id, get_inventory_number
+from .filemaker import get_inventory_id, get_inventory_number, is_series_production_type
 from .marc import (
     get_bib_id,
     get_creators,
@@ -40,8 +40,11 @@ def get_mams_metadata(
     # may be for batch processing.
     nlp_model = spacy.load("en_core_web_md")
 
+    # Used for some special handling of serial titles
+    is_series = is_series_production_type(filemaker_record)
+
     # This gets a collection of titles which will be unpacked later.
-    titles = get_title_info(bib_record)
+    titles = get_title_info(bib_record, is_series)
 
     # Get the rest of the data and prepare it for return.
     metadata = {

@@ -45,3 +45,17 @@ def strip_whitespace_and_punctuation(items: list[str]) -> list[str]:
     # Add space to right-strip of punctuation to handle spaces after punctuation,
     # then explicitly strip square brackets and spaces from resulting string.
     return [item.rstrip(string.punctuation + " ").strip("[] ") for item in items]
+
+
+def cleanup_production_type(production_type: str) -> list[str]:
+    """Cleanup the production_type string to allow series identification.
+
+    In the Filemaker PD, the production_type field is a list of strings,
+    often delimited by carriage returns (\r).
+    This function cleans up the string to allow series identification.
+
+    :param production_type: A string containing the production types.
+    :return: A list representation of the production types.
+    """
+    # Normalize to lowercase, split by carriage returns, then strip each item's whitespace
+    return [item.strip() for item in production_type.lower().split("\r")]
