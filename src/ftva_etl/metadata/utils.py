@@ -57,5 +57,5 @@ def cleanup_production_type(production_type: str) -> list[str]:
     :param production_type: A string containing the production types.
     :return: A list representation of the production types.
     """
-    # Normalize to lowercase and split by carriage returns
-    return production_type.lower().split("\r")
+    # Normalize to lowercase, split by carriage returns, then strip each item's whitespace
+    return [item.strip() for item in production_type.lower().split("\r")]

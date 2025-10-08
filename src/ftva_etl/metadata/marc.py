@@ -213,8 +213,6 @@ def get_title_info(bib_record: Record, is_series: bool = False) -> dict:
     name_of_part = _get_first_stripped(title_statement.get_subfields("p"))
     number_of_part = _get_first_stripped(title_statement.get_subfields("n"))
 
-    # TODO: Add logic to get `production_type` information from Filemaker record.
-
     # Handling the spec cases in reverse order,
     # to fail early and go from simplest to most complicated.
     # CASE 6: No main title
@@ -231,7 +229,7 @@ def get_title_info(bib_record: Record, is_series: bool = False) -> dict:
     if not is_series and main_title and number_of_part and not name_of_part:
         titles["title"] = ". ".join([main_title, number_of_part])
 
-    # CASE 3: Main title and name of part, but no number of part (for series)
+    # CASE 3: Main title and number of part, but no name of part (for series)
     if is_series and main_title and number_of_part and not name_of_part:
         titles["title"] = ". ".join([main_title, number_of_part])
         titles["series_title"] = main_title

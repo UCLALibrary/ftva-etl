@@ -13,6 +13,7 @@ class TestFilemaker(TestCase):
             "TELEVISION SERIES\rCOMEDY",
             "MINI-SERIES\rDRAMA",
             "SERIALS\rACTION",
+            " NEWS \rSHORT\r",
         ]
         # These should not be identified as series
         invalid_test_cases = [
