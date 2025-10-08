@@ -10,34 +10,78 @@ from spacy.language import Language
 
 
 # region Dates
-def get_date(bib_record: Record) -> str:
-    """Extract and format release_broadcast_date from a MARC bib record.
+def get_date_info(bib_record: Record) -> dict:
+    """Extract and format dates and qualifiers from a MARC bib record.
 
     :param bib_record: Pymarc Record object containing the bib data.
-    :return: Formatted date string or an empty string if not found."""
-    date_string = _get_date_from_bib(bib_record)
-    if not date_string:
-        return ""
-    return parse_date(date_string)
+    :return: Dict with key as qualifier and value as formatted date string. If no date found,
+    returns dict with key "release_broadcast_date" and empty string as value.
+    """
+    date_dict = _get_date_from_bib(bib_record)
+    if not date_dict:
+        return {"release_broadcast_date": ""}
+
+    # If no qualifier, fall back to release_broadcast_date
+    if not date_dict.get("qualifier"):
+        date_dict["qualifier"] = "release_broadcast_date"
+
+    return {date_dict["qualifier"]: parse_date(date_dict["date"])}
 
 
-def _get_date_from_bib(bib_record: Record) -> str:
+def _get_date_from_bib(bib_record: Record) -> dict:
     """Extract the release_broadcast_date from a MARC bib record.
 
     :param bib_record: Pymarc Record object containing the bib data.
-    :return: Publication date as a string, or an empty string if not found."""
-    # We want the first MARC 260 $c with both indicators blank.
-    date_field = bib_record.get_fields("260")
-    if date_field:
-        for field in date_field:
+    :return: Dict containing date (unformatted) and date type, both as strings.
+    """
+    # First, check for MARC 260 $c with both indicators blank.
+    # This will be a release_broadcast_date.
+    fields_260 = bib_record.get_fields("260")
+    if fields_260:
+        for field in fields_260:
             if field.indicator1 == " " and field.indicator2 == " ":
                 date_subfield = field.get_subfields("c")
                 if date_subfield:
-                    return date_subfield[0].strip()
-    # If no date found, return an empty string and log a warning.
+                    return {
+                        "date": date_subfield[0].strip(),
+                        "qualifier": "release_broadcast_date",
+                    }
+    # Next, check for MARC 264 $c with first indicator blank.
+    # If this is not found, no date is available.
+    fields_264 = bib_record.get_fields("264")
+    if not any(field.indicator1 == " " for field in fields_264):
+        return {"date": "", "qualifier": ""}
+
+    # Now, check second indicators in order of preference:
+    # 2 = distribution date
+    # 1 = publication date (write as release_broadcast_date)
+    # 4 = copyright notice date
+    # 0 = production date
+    # 3 = manufacture date
+    indicator_priority = ["2", "1", "4", "0", "3"]
+    qualifier_map = {
+        "2": "distribution_date",
+        "1": "release_broadcast_date",
+        "4": "copyright_notice_date",
+        "0": "production_date",
+        "3": "manufacture_date",
+    }
+    for indicator in indicator_priority:
+        for field in fields_264:
+            if field.indicator1 == " " and field.indicator2 == indicator:
+                date_subfields = field.get_subfields("c")
+                # If there are multiple 264 $c, take the first one.
+                if date_subfields:
+                    return {
+                        "date": date_subfields[0].strip(),
+                        "qualifier": qualifier_map[indicator],
+                    }
+
+    # If no date found, return an empty dict and log a warning.
     # TODO: LOGGING
     # logging.warning(f"No publication date found in bib record {bib_record['001']}.")
-    return ""
+
+    return {"date": "", "qualifier": ""}
 
 
 # endregion

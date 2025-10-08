@@ -1,8 +1,5 @@
 from unittest import TestCase
-from src.ftva_etl.metadata.marc import (
-    get_language_name,
-    get_title_info,
-)
+from src.ftva_etl.metadata.marc import get_language_name, get_title_info, get_date_info
 from pymarc import Record, Field, Indicators, Subfield
 
 
@@ -242,3 +239,124 @@ class TestMarcTitlesRegion(TestCase):
             "episode_title": "Name of Part. Number of Part",
         }
         self.assertDictEqual(titles, expected_result)
+
+
+class TestMarcDatesRegion(TestCase):
+    """Test the dates region of the MARC metadata module."""
+
+    def setUp(self):
+        minimal_bib_record = _get_minimal_bib_record()
+        self.minimal_bib_record = minimal_bib_record
+
+    def test_no_date_field(self):
+        record = self.minimal_bib_record
+        date_info = get_date_info(record)
+        expected_result = {"release_broadcast_date": ""}
+        self.assertDictEqual(date_info, expected_result)
+
+    def test_date_field_with_indicators(self):
+        record = self.minimal_bib_record
+        record.add_field(
+            Field(
+                tag="260",
+                indicators=Indicators("1", "0"),  # Indicators not both blank
+                subfields=[
+                    Subfield(code="c", value="2023"),
+                ],
+            )
+        )
+        date_info = get_date_info(record)
+        expected_result = {"release_broadcast_date": ""}
+        self.assertDictEqual(date_info, expected_result)
+
+    def test_date_field_260(self):
+        record = self.minimal_bib_record
+        record.add_field(
+            Field(
+                tag="260",
+                indicators=Indicators(" ", " "),  # Both indicators blank
+                subfields=[
+                    Subfield(code="c", value="2023"),
+                ],
+            )
+        )
+        date_info = get_date_info(record)
+        expected_result = {
+            "release_broadcast_date": "2023",
+        }
+        self.assertDictEqual(date_info, expected_result)
+
+    def test_date_260_priority_over_264(self):
+        record = self.minimal_bib_record
+        # Add a 264 field, which should be ignored if 260 is present
+        record.add_field(
+            Field(
+                tag="264",
+                indicators=Indicators(" ", "2"),
+                subfields=[
+                    Subfield(code="c", value="2022"),
+                ],
+            )
+        )
+        # Add the 260 field, which should take priority
+        record.add_field(
+            Field(
+                tag="260",
+                indicators=Indicators(" ", " "),
+                subfields=[
+                    Subfield(code="c", value="2023"),
+                ],
+            )
+        )
+        date_info = get_date_info(record)
+        expected_result = {
+            "release_broadcast_date": "2023",
+        }
+        self.assertDictEqual(date_info, expected_result)
+
+    def test_date_264_indicator_priority(self):
+        record = self.minimal_bib_record
+        # Add a 264 field with second indicator 2 (highest priority)
+        record.add_field(
+            Field(
+                tag="264",
+                indicators=Indicators(" ", "2"),
+                subfields=[
+                    Subfield(code="c", value="2023"),
+                ],
+            )
+        )
+        # Add a 264 with second indicator 1 (lower priority)
+        record.add_field(
+            Field(
+                tag="264",
+                indicators=Indicators(" ", "1"),
+                subfields=[
+                    Subfield(code="c", value="2022"),
+                ],
+            )
+        )
+        date_info = get_date_info(record)
+        expected_result = {
+            "distribution_date": "2023",
+        }
+        self.assertDictEqual(date_info, expected_result)
+
+    def test_date_formatting(self):
+        record = self.minimal_bib_record
+        record.add_field(
+            Field(
+                tag="260",
+                indicators=Indicators(" ", " "),
+                subfields=[
+                    Subfield(
+                        code="c", value="[April 5, 2023]."
+                    ),  # Brackets, period, and non-standard format
+                ],
+            )
+        )
+        date_info = get_date_info(record)
+        expected_result = {
+            "release_broadcast_date": "[2023-04-05]",
+        }
+        self.assertDictEqual(date_info, expected_result)
