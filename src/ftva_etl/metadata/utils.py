@@ -68,7 +68,9 @@ def cleanup_production_type(production_type: str) -> list[str]:
     return [item.strip() for item in production_type.lower().split("\r")]
 
 
-def filter_alma_records(records: list, inventory_number: str) -> list:
+def filter_by_inventory_number_and_library(
+    records: list, inventory_number: str
+) -> list:
     """Given a list of pymarc Records from Alma as obtained via SRU, and an inventory number
     (sourced from FTVA database), return a list of pymarc Records which match the inventory number
     and are from the FTVA library.
@@ -81,21 +83,23 @@ def filter_alma_records(records: list, inventory_number: str) -> list:
 
     filtered_records = []
     for record in records:
-        # There may be multiple AVA fields (one for each holding record), so get them all
+        # Holdings information is in the "availability" fields (tag AVA),
+        # found within the MARC bib record provided by the SRU client.
+        # There may be multiple AVA fields (one for each holding record), so get them all.
         fields_ava = record.get_fields("AVA")
         for field_ava in fields_ava:
             # $b is the library code, which should be "ftva" for FTVA records.
             # get_subfields() returns a list, but there should only be one $b and $d,
             # so just check the first one of each.
             library_code = field_ava.get_subfields("b")[0].lower()
-            # $d is Call Number
+            # $d is Call Number.
             call_number = field_ava.get_subfields("d")[0]
 
             if library_code == "ftva" and _is_inventory_number_match(
                 inventory_number, call_number
             ):
                 filtered_records.append(record)
-                break  # No need to check other AVA fields for this record
+                break  # No need to check other AVA fields for this record.
 
     return filtered_records
 
@@ -110,10 +114,10 @@ def _is_inventory_number_match(inventory_number: str, call_number: str) -> bool:
     :return: True if the inventory number matches the call number, False otherwise.
     """
 
-    inv_no_prefixes = ["VA", "DVD", "VD", "XFE", "XFF", "XVE", "HFA", "ZVB"]
-    call_no_suffixes = [" T", " M", " R"]
+    inv_no_prefixes = ["DVD", "HFA", "VA", "VD", "XFE", "XFF", "XVE", "ZVB"]
+    call_no_suffixes = [" M", " R", " T"]
 
-    # Exact match is always a match
+    # Exact match is always a match.
     if inventory_number == call_number:
         return True
 
