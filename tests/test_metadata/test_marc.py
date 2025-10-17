@@ -378,3 +378,41 @@ class TestMarcDatesRegion(TestCase):
             "release_broadcast_date": "[2023-04-05]",
         }
         self.assertDictEqual(date_info, expected_result)
+
+    def test_date_formatting_year_in_brackets(self):
+        record = self.minimal_bib_record
+        record.add_field(
+            Field(
+                tag="260",
+                indicators=Indicators(" ", " "),
+                subfields=[
+                    Subfield(
+                        code="c", value="[2023]"
+                    ),  # Simple, four-digit year in brackets
+                ],
+            )
+        )
+        date_info = get_date_info(record)
+        expected_result = {
+            "release_broadcast_date": "[2023]",
+        }
+        self.assertDictEqual(date_info, expected_result)
+
+    def test_date_formatting_year_in_brackets_with_hyphens(self):
+        record = self.minimal_bib_record
+        record.add_field(
+            Field(
+                tag="260",
+                indicators=Indicators(" ", " "),
+                subfields=[
+                    Subfield(
+                        code="c", value="[202-]"
+                    ),  # Hyphen to indicate an uncertain year
+                ],
+            )
+        )
+        date_info = get_date_info(record)
+        expected_result = {
+            "release_broadcast_date": "[202-]",
+        }
+        self.assertDictEqual(date_info, expected_result)

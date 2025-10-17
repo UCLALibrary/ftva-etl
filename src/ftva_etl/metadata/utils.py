@@ -18,8 +18,10 @@ def parse_date(date_string: str) -> str:
     date_string = date_string.rstrip(".,;:!?")
     date_string = date_string.strip()
 
-    # If date_string is just a year (i.e. 4 digits), keep it as is
-    if len(date_string) == 4 and date_string.isdigit():
+    # Keep date_string as is if it matches one of the following conditions:
+    # 1. date_string is just a year (i.e. 4 digits); or
+    # 2. date_string has a length of 4, and has hyphens to indicate an uncertain year
+    if len(date_string) == 4 and (date_string.isdigit() or "-" in date_string):
         formatted_date = date_string
         if in_brackets:
             formatted_date = f"[{formatted_date}]"
