@@ -459,3 +459,4 @@ class TestMarcCreatorsRegion(TestCase):
         record = self.minimal_bib_record
         creators = get_creators(record, self.nlp_model)
         self.assertIn("Jessica Co-Director", creators)
+        self.assertEqual(len(creators), 2)
