@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2 - 2025-10-20
+
+### Fixed
+
+- MARC 245 $c parsing for directors is improved by splitting on semicolons.
+
 ## 0.1.1 - 2025-10-17
 
 ### Fixed
