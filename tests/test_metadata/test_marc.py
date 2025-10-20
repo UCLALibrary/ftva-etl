@@ -425,7 +425,11 @@ class TestMarcDatesRegion(TestCase):
 
 
 class TestMarcCreatorsRegion(TestCase):
-    """Test the creators region of the MARC metadata module."""
+    """Test the creators region of the MARC metadata module.
+
+    At present (2025-10-20), only directors should be included as creators.
+    If this changes, tests will need to be revised.
+    """
 
     def setUp(self):
         minimal_bib_record = _get_minimal_bib_record()
@@ -433,7 +437,8 @@ class TestMarcCreatorsRegion(TestCase):
         f245 = minimal_bib_record.get("245")
         if f245:  # There is, but type-checker knows it *could* be None
             f245.add_subfield(
-                code="c", value="director, John Director ; writer, Jane Writer."
+                code="c",
+                value="director, John Director and Jessica Co-Director ; writer, Jane Writer.",
             )
         self.minimal_bib_record = minimal_bib_record
 
@@ -449,3 +454,8 @@ class TestMarcCreatorsRegion(TestCase):
         record = self.minimal_bib_record
         creators = get_creators(record, self.nlp_model)
         self.assertIn("John Director", creators)
+
+    def test_multiple_directors_are_included(self):
+        record = self.minimal_bib_record
+        creators = get_creators(record, self.nlp_model)
+        self.assertIn("Jessica Co-Director", creators)
