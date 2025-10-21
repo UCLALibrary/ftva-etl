@@ -88,24 +88,23 @@ def _get_date_from_bib(bib_record: Record) -> dict:
 
 
 # region Creators
-def _get_creator_info_from_bib(bib_record: Record) -> list:
+def _get_creator_info_from_bib(bib_record: Record) -> list[str]:
     """Extract creators from the MARC bib record.
 
     :param bib_record: Pymarc Record object containing the bib data.
     :return: List of strings potentially containing creator names."""
     creators = []
-    # MARC 245 $c is not repeatable, so we will always take the first one.
-    marc_245_c = (
-        bib_record.get_fields("245")[0].get_subfields("c")
-        if bib_record.get_fields("245")
-        else []
-    )
+    f245 = bib_record.get("245")  # not repeatable
+    if f245:
+        s245c = f245.get("c", "")  # not repeatable
+        # 245 $c often contains multiple segments, separated by semicolon.
+        # Added type hint as pymarc Field.get() has no return type.....
+        creators.extend(s245c.split(";"))  # type: ignore
 
-    creators.extend(marc_245_c)
     return creators
 
 
-def _parse_creators(source_string: str, model: Language) -> list:
+def _parse_creators(source_string: str, model: Language) -> list[str]:
     """Given a string sourced from MARC data, parse it to extract creator names.
     First, a list of attribution phrases is checked to see if the string
     contains any of them. If it does, the substring following the phrase

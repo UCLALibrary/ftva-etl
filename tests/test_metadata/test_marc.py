@@ -1,5 +1,11 @@
+import spacy
 from unittest import TestCase
-from src.ftva_etl.metadata.marc import get_language_name, get_title_info, get_date_info
+from src.ftva_etl.metadata.marc import (
+    get_creators,
+    get_date_info,
+    get_language_name,
+    get_title_info,
+)
 from pymarc import Record, Field, Indicators, Subfield
 
 
@@ -416,3 +422,41 @@ class TestMarcDatesRegion(TestCase):
             "release_broadcast_date": "[202-]",
         }
         self.assertDictEqual(date_info, expected_result)
+
+
+class TestMarcCreatorsRegion(TestCase):
+    """Test the creators region of the MARC metadata module.
+
+    At present (2025-10-20), only directors should be included as creators.
+    If this changes, tests will need to be revised.
+    """
+
+    def setUp(self):
+        minimal_bib_record = _get_minimal_bib_record()
+        # Minimal record has only 245 $a; add $c with multiple names in varied roles.
+        f245 = minimal_bib_record.get("245")
+        if f245:  # There is, but type-checker knows it *could* be None
+            f245.add_subfield(
+                code="c",
+                value="director, John Director and Jessica Co-Director ; writer, Jane Writer.",
+            )
+        self.minimal_bib_record = minimal_bib_record
+
+        # Needed for personal name parsing in get_creators
+        self.nlp_model = spacy.load("en_core_web_md")
+
+    def test_non_directors_are_excluded(self):
+        record = self.minimal_bib_record
+        creators = get_creators(record, self.nlp_model)
+        self.assertNotIn("Jane Writer", creators)
+
+    def test_directors_are_included(self):
+        record = self.minimal_bib_record
+        creators = get_creators(record, self.nlp_model)
+        self.assertIn("John Director", creators)
+
+    def test_multiple_directors_are_included(self):
+        record = self.minimal_bib_record
+        creators = get_creators(record, self.nlp_model)
+        self.assertIn("Jessica Co-Director", creators)
+        self.assertEqual(len(creators), 2)
