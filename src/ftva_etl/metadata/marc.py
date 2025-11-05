@@ -253,6 +253,7 @@ def get_title_info(bib_record: Record, is_series: bool = False) -> dict:
         return stripped[0] if stripped else ""
 
     main_title = _get_first_stripped(title_statement.get_subfields("a"))
+    remainder_of_title = _get_first_stripped(title_statement.get_subfields("b"))
     name_of_part = _get_first_stripped(title_statement.get_subfields("p"))
     number_of_part = _get_first_stripped(title_statement.get_subfields("n"))
 
@@ -264,9 +265,15 @@ def get_title_info(bib_record: Record, is_series: bool = False) -> dict:
         # Raise a ValueError to be handled by callers.
         raise ValueError(f"No 245 $a found in bib record {record_id}.")
 
+    # CASE 6.1: Handling 245 $b, if it exists.
+    # Not a complete case, but we can combine main_title and remainder_of_title,
+    # at this point, since 245 $b should always follow 245 $a, if it exists.
+    if remainder_of_title:
+        main_title = ". ".join([main_title, remainder_of_title])
+
     # CASE 5: Main title, but no name of part or number of part
     if main_title and not name_of_part and not number_of_part:
-        titles["title"] = main_title
+        titles["title"] = main_title  # 245 $a (+ 245 $b, if present)
 
     # CASE 4: Main title and number of part, but no name of part (for non-series)
     if not is_series and main_title and number_of_part and not name_of_part:
