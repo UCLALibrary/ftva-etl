@@ -55,7 +55,12 @@ def get_mams_metadata(
         "alma_bib_id": get_bib_id(bib_record),
         "inventory_id": get_inventory_id(filemaker_record),
         "uuid": get_uuid(digital_data_record),
-        "inventory_number": get_inventory_number(filemaker_record),
+        # All records returned from FM
+        # should have only one inventory number for now,
+        # but MAMS expects an array in JSON, so wrap in a list.
+        # TODO: Parse comma-separated or otherwise delimited inventory numbers
+        # from FM or other sources, if needed.
+        "inventory_numbers": [get_inventory_number(filemaker_record)],
         "creators": get_creators(bib_record, nlp_model),
         "language": get_language_name(bib_record),
         "file_name": get_file_name(digital_data_record),
