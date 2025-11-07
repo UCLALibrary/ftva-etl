@@ -29,7 +29,8 @@ def get_date_info(bib_record: Record) -> dict:
 
 
 def _get_date_from_bib(bib_record: Record) -> dict:
-    """Extract the release_broadcast_date from a MARC bib record.
+    """Extract the release_broadcast_date from a MARC bib record,
+    or other date types, depending on 2nd indicator on 264 field.
 
     :param bib_record: Pymarc Record object containing the bib data.
     :return: Dict containing date (unformatted) and date type, both as strings.
