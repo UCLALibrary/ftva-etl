@@ -119,6 +119,32 @@ class TestMarcTitlesRegion(TestCase):
         }
         self.assertDictEqual(titles, expected_result)
 
+    def test_spec_case_1_with_remainder_of_title(self):
+        """Test the spec case where the main title, remainder of title,
+        name of part, and number of part are present. This should be sufficient
+        to cover the other cases as well, since this case includes all relevant title fields.
+        """
+        record = self.minimal_bib_record
+        record.add_field(
+            Field(
+                tag="245",
+                indicators=Indicators("0", "0"),
+                subfields=[
+                    Subfield(code="a", value="Main Title"),
+                    Subfield(code="b", value="Remainder of Title"),
+                    Subfield(code="p", value="Name of Part"),
+                    Subfield(code="n", value="Number of Part"),
+                ],
+            )
+        )
+        titles = get_title_info(record)
+        expected_result = {
+            "title": "Main Title. Remainder of Title. Name of Part. Number of Part",
+            "series_title": "Main Title. Remainder of Title",
+            "episode_title": "Name of Part. Number of Part",
+        }
+        self.assertDictEqual(titles, expected_result)
+
     def test_spec_case_2(self):
         """Test the spec case where the main title and name of part are present,
         but the number of part is not.
@@ -420,6 +446,19 @@ class TestMarcDatesRegion(TestCase):
         date_info = get_date_info(record)
         expected_result = {
             "release_broadcast_date": "[202-]",
+        }
+        self.assertDictEqual(date_info, expected_result)
+
+    def test_date_field_008(self):
+        record = self.minimal_bib_record
+        # Add a 008 field with a date in position 7-10
+        record.add_field(
+            # 008 must be 40 characters
+            Field(tag="008", data="xxxxxxx1970xxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+        )
+        date_info = get_date_info(record)
+        expected_result = {
+            "release_broadcast_date": "1970",
         }
         self.assertDictEqual(date_info, expected_result)
 

@@ -29,7 +29,8 @@ def get_date_info(bib_record: Record) -> dict:
 
 
 def _get_date_from_bib(bib_record: Record) -> dict:
-    """Extract the release_broadcast_date from a MARC bib record.
+    """Extract the release_broadcast_date from a MARC bib record,
+    or other date types, depending on 2nd indicator on 264 field.
 
     :param bib_record: Pymarc Record object containing the bib data.
     :return: Dict containing date (unformatted) and date type, both as strings.
@@ -46,36 +47,44 @@ def _get_date_from_bib(bib_record: Record) -> dict:
                         "date": date_subfield[0].strip(),
                         "qualifier": "release_broadcast_date",
                     }
-    # Next, check for MARC 264 $c with first indicator blank.
-    # If this is not found, no date is available.
+    # Next, check for any MARC 264 $c with first indicator blank.
     fields_264 = bib_record.get_fields("264")
-    if not any(field.indicator1 == " " for field in fields_264):
-        return {"date": "", "qualifier": ""}
-
-    # Now, check second indicators in order of preference:
-    # 2 = distribution date
-    # 1 = publication date (write as release_broadcast_date)
-    # 4 = copyright notice date
-    # 0 = production date
-    # 3 = manufacture date
-    indicator_priority = ["2", "1", "4", "0", "3"]
-    qualifier_map = {
-        "2": "distribution_date",
-        "1": "release_broadcast_date",
-        "4": "copyright_notice_date",
-        "0": "production_date",
-        "3": "manufacture_date",
-    }
-    for indicator in indicator_priority:
-        for field in fields_264:
-            if field.indicator1 == " " and field.indicator2 == indicator:
-                date_subfields = field.get_subfields("c")
-                # If there are multiple 264 $c, take the first one.
-                if date_subfields:
-                    return {
-                        "date": date_subfields[0].strip(),
-                        "qualifier": qualifier_map[indicator],
-                    }
+    if any(field.indicator1 == " " for field in fields_264):
+        # Now, check second indicators in order of preference:
+        # 2 = distribution date
+        # 1 = publication date (write as release_broadcast_date)
+        # 4 = copyright notice date
+        # 0 = production date
+        # 3 = manufacture date
+        indicator_priority = ["2", "1", "4", "0", "3"]
+        qualifier_map = {
+            "2": "distribution_date",
+            "1": "release_broadcast_date",
+            "4": "copyright_notice_date",
+            "0": "production_date",
+            "3": "manufacture_date",
+        }
+        for indicator in indicator_priority:
+            for field in fields_264:
+                if field.indicator1 == " " and field.indicator2 == indicator:
+                    date_subfields = field.get_subfields("c")
+                    # If there are multiple 264 $c, take the first one.
+                    if date_subfields:
+                        return {
+                            "date": date_subfields[0].strip(),
+                            "qualifier": qualifier_map[indicator],
+                        }
+    # Finally, if no date found in 260 or 264, check 008 position 7-10.
+    field_008 = bib_record.get("008")
+    if field_008:
+        field_data = field_008.data
+        # MARC bib 008 should be 40 characters, or is not valid and can't be trusted
+        # to have specific values in the correct positions.
+        if field_data and len(field_data) == 40:
+            # 4 characters, 0-based 7-10
+            date_from_008 = field_data[7:11]
+            # Dates from 008 are always release_broadcast_date, according to specs.
+            return {"date": date_from_008, "qualifier": "release_broadcast_date"}
 
     # If no date found, return an empty dict and log a warning.
     # TODO: LOGGING
@@ -253,6 +262,7 @@ def get_title_info(bib_record: Record, is_series: bool = False) -> dict:
         return stripped[0] if stripped else ""
 
     main_title = _get_first_stripped(title_statement.get_subfields("a"))
+    remainder_of_title = _get_first_stripped(title_statement.get_subfields("b"))
     name_of_part = _get_first_stripped(title_statement.get_subfields("p"))
     number_of_part = _get_first_stripped(title_statement.get_subfields("n"))
 
@@ -264,9 +274,15 @@ def get_title_info(bib_record: Record, is_series: bool = False) -> dict:
         # Raise a ValueError to be handled by callers.
         raise ValueError(f"No 245 $a found in bib record {record_id}.")
 
+    # CASE 6.1: Handling 245 $b, if it exists.
+    # Not a complete case, but we can combine main_title and remainder_of_title,
+    # at this point, since 245 $b should always follow 245 $a, if it exists.
+    if remainder_of_title:
+        main_title = ". ".join([main_title, remainder_of_title])
+
     # CASE 5: Main title, but no name of part or number of part
     if main_title and not name_of_part and not number_of_part:
-        titles["title"] = main_title
+        titles["title"] = main_title  # 245 $a (+ 245 $b, if present)
 
     # CASE 4: Main title and number of part, but no name of part (for non-series)
     if not is_series and main_title and number_of_part and not name_of_part:
