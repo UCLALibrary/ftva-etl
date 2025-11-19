@@ -86,6 +86,21 @@ class TestMarcLanguagesRegion(TestCase):
         language_name = get_language_name(record)
         self.assertEqual(language_name, "French")
 
+    def test_get_language_name_empty_code(self):
+        # The minimal record has no 008 field; add one with
+        # 3 empty spaces in positions 35-37.
+        # This should map to "Undetermined".
+
+        # A bib 008 field must have 40 characters.
+        spaces = " " * 40
+        # Set positions 35-37 to a valid language code (in the language map).
+        field_008_data = spaces[:35] + "   " + spaces[38:]
+        record = self.minimal_bib_record
+        # Add the good 008 field
+        record.add_field(Field(tag="008", data=field_008_data))
+        language_name = get_language_name(record)
+        self.assertEqual(language_name, "Undetermined")
+
 
 class TestMarcTitlesRegion(TestCase):
     """Test the titles region of the MARC metadata module."""
