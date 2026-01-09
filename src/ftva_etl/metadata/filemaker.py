@@ -35,3 +35,12 @@ def is_series_production_type(fm_record: Record) -> bool:
     series_keywords = ["television series", "mini-series", "serials", "news"]
     # Look for any of the keywords in the production type list
     return any(keyword in production_type for keyword in series_keywords)
+
+
+def get_creators(fm_record: Record) -> list:
+    """Get the creators from a Filemaker record.
+
+    :param fm_record: A Filemaker record.
+    :return: A list of creators.
+    """
+    return [creator.strip() for creator in fm_record.director.split(",")]

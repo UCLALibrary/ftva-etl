@@ -10,10 +10,15 @@ from .digital_data import (
     get_uuid,
     get_audio_class,
 )
-from .filemaker import get_inventory_id, get_inventory_number, is_series_production_type
+from .filemaker import (
+    get_inventory_id,
+    get_inventory_number,
+    is_series_production_type,
+    get_creators as get_fm_creators,
+)
 from .marc import (
     get_bib_id,
-    get_creators,
+    get_creators as get_alma_creators,
     get_date_info,
     get_language_name,
     get_title_info,
@@ -52,23 +57,28 @@ def get_mams_metadata(
 
     # Get the rest of the data and prepare it for return.
     metadata = {
-        "alma_bib_id": get_bib_id(bib_record),
-        "inventory_id": get_inventory_id(filemaker_record),
+        "alma": {
+            "alma_bib_id": get_bib_id(bib_record),
+            "language": get_language_name(bib_record),
+            "creators": get_alma_creators(bib_record, nlp_model),
+            **titles,
+            **date_info,
+        },
+        "filemaker": {
+            "inventory_id": get_inventory_id(filemaker_record),
+            # All records returned from FM
+            # should have only one inventory number for now,
+            # but MAMS expects an array in JSON, so wrap in a list.
+            # TODO: Parse comma-separated or otherwise delimited inventory numbers
+            # from FM or other sources, if needed.
+            "inventory_numbers": [get_inventory_number(filemaker_record)],
+            "creators": get_fm_creators(filemaker_record),
+        },
         "uuid": get_uuid(digital_data_record),
-        # All records returned from FM
-        # should have only one inventory number for now,
-        # but MAMS expects an array in JSON, so wrap in a list.
-        # TODO: Parse comma-separated or otherwise delimited inventory numbers
-        # from FM or other sources, if needed.
-        "inventory_numbers": [get_inventory_number(filemaker_record)],
-        "creators": get_creators(bib_record, nlp_model),
-        "language": get_language_name(bib_record),
         "file_name": get_file_name(digital_data_record),
         "asset_type": get_asset_type(digital_data_record),
         "media_type": get_media_type(digital_data_record),
         "audio_class": get_audio_class(digital_data_record),
-        **titles,
-        **date_info,
     }
 
     # If a match_asset_uuid is provided for a track, add it to the metadata record.
