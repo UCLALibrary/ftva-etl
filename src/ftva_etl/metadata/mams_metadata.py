@@ -20,7 +20,7 @@ from .marc import (
     get_bib_id,
     get_creators as get_alma_creators,
     get_date_info,
-    get_language_name,
+    get_language_name as get_alma_language_name,
     get_title_info,
 )
 
@@ -59,7 +59,7 @@ def get_mams_metadata(
     metadata = {
         "alma": {
             "alma_bib_id": get_bib_id(bib_record),
-            "language": get_language_name(bib_record),
+            "language": get_alma_language_name(bib_record),
             "creators": get_alma_creators(bib_record, nlp_model),
             **titles,
             **date_info,

@@ -47,3 +47,12 @@ def get_creators(fm_record: Record) -> list:
     # as that appears to be how the data is formatted in Filemaker.
     # If other delimiters are used, they should probably be made consistent on the FM side.
     return [creator.strip() for creator in fm_record.director.split(",")]
+
+
+def get_language_name(fm_record: Record) -> str:
+    """Get the language name from a Filemaker record.
+
+    :param fm_record: A Filemaker record.
+    :return: The language name as a string.
+    """
+    return fm_record.language
