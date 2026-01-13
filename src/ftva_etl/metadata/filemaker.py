@@ -43,4 +43,7 @@ def get_creators(fm_record: Record) -> list:
     :param fm_record: A Filemaker record.
     :return: A list of creators.
     """
+    # Currently splitting on commas,
+    # as that appears to be how the data is formatted in Filemaker.
+    # Might need to handle other delimiters, if they appear.
     return [creator.strip() for creator in fm_record.director.split(",")]
