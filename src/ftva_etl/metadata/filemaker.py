@@ -45,5 +45,5 @@ def get_creators(fm_record: Record) -> list:
     """
     # Currently splitting on commas,
     # as that appears to be how the data is formatted in Filemaker.
-    # Might need to handle other delimiters, if they appear.
+    # If other delimiters are used, they should probably be made consistent on the FM side.
     return [creator.strip() for creator in fm_record.director.split(",")]
