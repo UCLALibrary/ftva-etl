@@ -128,29 +128,24 @@ def _parse_creators(source_string: str, model: Language) -> list[str]:
 
     attribution_phrases = [
         "directed by",
-        "director",  # This will also match "directors"
+        "director",  # This will also match "directors" or "producer-director"
         "a film by",
         "supervised by",
     ]
-    # Find location of the first attribution phrase
+
+    # Find the first attribution phrase in the source string,
+    # and set the creator string for processing by the NER model.
     for phrase in attribution_phrases:
         if phrase in source_string.lower():
-            start_index = source_string.lower().find(phrase) + len(phrase)
-            # Extract substring after the phrase until the end of the string
-            # TODO: Does this work in general? Could a director be listed before
-            # a non-director role that we shoudn't include?
-            creator_string = source_string[start_index:].strip()
+            creator_string = source_string.strip()
             break
 
+    # If no attribution phrase is found, return an empty list.
     if not creator_string:
         return []
 
     doc = model(creator_string)
-    creators = []
-    for ent in doc.ents:
-        if ent.label_ == "PERSON":
-            creators.append(ent.text)
-    return creators
+    return [ent.text for ent in doc.ents]
 
 
 def get_creators(bib_record: Record, model: Language) -> list:

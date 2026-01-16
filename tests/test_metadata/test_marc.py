@@ -486,31 +486,47 @@ class TestMarcCreatorsRegion(TestCase):
     """
 
     def setUp(self):
-        minimal_bib_record = _get_minimal_bib_record()
-        # Minimal record has only 245 $a; add $c with multiple names in varied roles.
-        f245 = minimal_bib_record.get("245")
-        if f245:  # There is, but type-checker knows it *could* be None
-            f245.add_subfield(
-                code="c",
-                value="director, John Director and Jessica Co-Director ; writer, Jane Writer.",
-            )
-        self.minimal_bib_record = minimal_bib_record
+        # Define test cases
+        test_cases = [
+            # Multiple directors and a writer, who should be excluded
+            {
+                "input": "director, John Director and Jessica Co-Director ; writer, Jane Writer.",
+                "expected": ["John Director", "Jessica Co-Director"],
+            },
+            # Just a writer, who should be excluded
+            {"input": "writer, Jane Writer.", "expected": []},
+            # Single director, who should be included
+            {"input": "director, John Director.", "expected": ["John Director"]},
+            # Compound attribution phrase that includes "director",
+            # which should be the only one included
+            {
+                "input": "NBC ; producer-director, Barry Shear ; writer, John Bradford.",
+                "expected": ["Barry Shear"],
+            },
+            # Single director, where attribution phrase is after the name
+            {"input": "John Director, director.", "expected": ["John Director"]},
+            # Multiple attributions in single string, but only one should be included
+            # TODO: address this case in `marc.get_creators()`, as it is currently failing
+            {
+                "input": "Directed by John Director, written by Jane Writer.",
+                "expected": ["John Director"],
+            },
+        ]
+        # Create tuples of test records and expected results
+        self.test_records = []
+        for test_case in test_cases:
+            test_record = _get_minimal_bib_record()
+            # Minimal record has only 245 $a; add $c with multiple names in varied roles.
+            f245 = test_record.get("245")
+            if f245:  # There is, but type-checker knows it *could* be None
+                f245.add_subfield(code="c", value=test_case["input"])
+            self.test_records.append((test_record, test_case["expected"]))
 
         # Needed for personal name parsing in get_creators
         self.nlp_model = spacy.load("en_core_web_md")
 
-    def test_non_directors_are_excluded(self):
-        record = self.minimal_bib_record
-        creators = get_creators(record, self.nlp_model)
-        self.assertNotIn("Jane Writer", creators)
-
-    def test_directors_are_included(self):
-        record = self.minimal_bib_record
-        creators = get_creators(record, self.nlp_model)
-        self.assertIn("John Director", creators)
-
-    def test_multiple_directors_are_included(self):
-        record = self.minimal_bib_record
-        creators = get_creators(record, self.nlp_model)
-        self.assertIn("Jessica Co-Director", creators)
-        self.assertEqual(len(creators), 2)
+    def test_creator_parsing(self):
+        for test_record, expected in self.test_records:
+            with self.subTest(test_record=test_record):
+                creators = get_creators(test_record, self.nlp_model)
+                self.assertEqual(creators, expected)
