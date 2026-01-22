@@ -1,5 +1,6 @@
 import dateutil.parser
 import string
+import logging
 
 
 def parse_date(date_string: str) -> str:
@@ -132,3 +133,20 @@ def _is_inventory_number_match(inventory_number: str, call_number: str) -> bool:
                     return True
 
     return False
+
+
+def configure_logging(enable_logging: bool = False) -> logging.Logger:
+    """Configure a logger for the metadata package that logs to stdout if enabled.
+
+    :param enable_logging: Whether to enable logging. Defaults to False.
+    :return: The logger instance.
+    """
+    # logger docs say to use a named logger rather than the root logger.
+    # See @https://docs.python.org/3/howto/logging.html#library-config
+    logger = logging.getLogger("ftva_etl.metadata")
+    logger.setLevel(logging.INFO)
+    # NullHandler effectively disables logging if enable_logging is False.
+    handler = logging.StreamHandler() if enable_logging else logging.NullHandler()
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s"))
+    logger.addHandler(handler)
+    return logger

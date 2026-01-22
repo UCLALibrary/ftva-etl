@@ -1,4 +1,5 @@
 import spacy
+from .utils import configure_logging
 from fmrest.record import Record as FM_Record
 from pymarc import Record as Pymarc_Record
 from .digital_data import (
@@ -25,6 +26,7 @@ def get_mams_metadata(
     filemaker_record: FM_Record,
     digital_data_record: dict,
     match_asset_uuid: str | None = None,
+    enable_logging: bool = False,
 ) -> dict:
     """Generate JSON metadata for ingest into the FTVA MAMS.
 
@@ -32,8 +34,13 @@ def get_mams_metadata(
     :param filemaker_record: A fmrest filemaker record.
     :param digital_data_record: A dict containing an FTVA digital data record.
     :param match_asset_uuid: A string representation of an asset's UUID. Defaults to None.
+    :param enable_logging: Whether to enable logging. Defaults to False.
     :return asset: A dict of metadata combined from the input records.
     """
+
+    # Configure logging for the package.
+    # Only logs to stdout if enable_logging is True.
+    configure_logging(enable_logging)
 
     # Load spacy model for NER
     # TODO: Support use of a custom model, if needed?

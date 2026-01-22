@@ -1,4 +1,5 @@
 import json
+import logging
 from importlib.resources import open_text
 from pymarc import Record
 from .utils import parse_date, strip_whitespace_and_punctuation
@@ -6,7 +7,7 @@ from .utils import parse_date, strip_whitespace_and_punctuation
 # for type hinting
 from spacy.language import Language
 
-# Code which extracts data from a NARC record.
+logger = logging.getLogger("ftva_etl.metadata")
 
 
 # region Dates
@@ -128,6 +129,7 @@ def _parse_creators(source_string: str, model: Language) -> list[str]:
 
     attribution_phrases = [
         "directed by",
+        "directed and written by",
         "director",  # This will also match "directors" or "producer-director"
         "a film by",
         "supervised by",
@@ -158,6 +160,13 @@ def get_creators(bib_record: Record, model: Language) -> list:
     parsed_creators = []
     for creator in creators:
         parsed_creators.extend(_parse_creators(creator, model))
+    # Log a message if 245$c contains a value, but no creators can be parsed.
+    # This is to facilitate manual review of the record for unanticipated attribution phrases.
+    if creators and not parsed_creators:
+        logger.info(
+            f"Field 245$c on MMS ID {get_record_id(bib_record)} contains a value, "
+            f"but no creators could be parsed. 245$c values: {creators}"
+        )
     return parsed_creators
 
 
