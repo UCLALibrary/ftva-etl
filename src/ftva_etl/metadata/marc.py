@@ -7,7 +7,8 @@ from .utils import parse_date, strip_whitespace_and_punctuation
 # for type hinting
 from spacy.language import Language
 
-logger = logging.getLogger("ftva_etl.metadata")
+# Create a module logger, which will be a child of the package logger
+logger = logging.getLogger(__name__)
 
 
 # region Dates

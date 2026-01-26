@@ -1,3 +1,4 @@
+import sys
 import dateutil.parser
 import string
 import logging
@@ -135,18 +136,47 @@ def _is_inventory_number_match(inventory_number: str, call_number: str) -> bool:
     return False
 
 
-def configure_logging(enable_logging: bool = False) -> logging.Logger:
-    """Configure a logger for the metadata package that logs to stdout if enabled.
+def _reset_handlers(logger: logging.Logger) -> None:
+    """Reset the handlers of the provided logger.
+
+    :param logger: The logger to reset the handlers of.
+    """
+    # Close then remove each handler
+    for handler in logger.handlers:
+        handler.close()
+        logger.removeHandler(handler)
+
+
+def configure_logging(
+    enable_logging: bool = False,
+    log_level: int = logging.CRITICAL,
+    handler: logging.Handler = logging.NullHandler(),
+    formatter: logging.Formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s: %(message)s"
+    ),
+) -> None:
+    """Configure logging for the package using the provided parameters, or defaults.
 
     :param enable_logging: Whether to enable logging. Defaults to False.
-    :return: The logger instance.
+    :param log_level: The log level to use. Defaults to logging.CRITICAL, which has int value 50.
+    :param handler: The handler to use. Defaults to logging.NullHandler().
+    :param formatter: The formatter to use. Defaults to the standard formatter provided in params.
     """
-    # logger docs say to use a named logger rather than the root logger.
-    # See @https://docs.python.org/3/howto/logging.html#library-config
-    logger = logging.getLogger("ftva_etl.metadata")
-    logger.setLevel(logging.INFO)
-    # NullHandler effectively disables logging if enable_logging is False.
-    handler = logging.StreamHandler() if enable_logging else logging.NullHandler()
-    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s"))
+    # Use the package name (i.e. `ftva_etl.metadata`) to get a logger
+    # that will be a child of the logger created on package import.
+    logger = logging.getLogger(__package__)
+    # Reset the handlers to prevent multiple handlers being added
+    _reset_handlers(logger)
+
+    if enable_logging:
+        # Log to stdout and capture INFO level and above, if enabled.
+        # stdout is specified explicitly, as default is stderr.
+        log_level = logging.INFO
+        handler = logging.StreamHandler(sys.stdout)
+
+    # Using NullHandler by default effectively disables logging
+    handler.setFormatter(formatter)
+
+    logger.setLevel(log_level)
     logger.addHandler(handler)
-    return logger
+    # We don't need to return the logger, as it can be accessed via the logger name
