@@ -9,9 +9,9 @@ Tests can be auto-discovered and run using `python -m unittest` from within the 
 # Logging
 This package uses Python's standard `logging` library for handling logs. Consuming applications can enable logs within the package using the `configure_logging()` function in `ftva_etl.metadata.utils`. The function accepts several parameters that allow configuration of logging behavior:
 - `enable_logging`: boolean. Defaults to False. Allows logging to be turned on or off.
-- log_level: int. Defaults to `logging.INFO`, which has numeric value 20. Allows for the threshold at which log records will be logged to be set.
-- handler: `logging.Handler` instance. Defaults to `StreamHandler` outputting to `stdout` if logging is enabled and this param is left out. Can be used to set a `FileHandler`, for example.
-- formatter: `logging.Formatter` instance. Defaults to `"%(asctime)s - %(name)s - %(levelname)s: %(message)s"` if logging is enabled and this param is left out. Can be used to set a different format.
+- `log_level`: int. Defaults to `logging.INFO`, which has numeric value 20. Allows for the threshold at which log records will be logged to be set.
+- `handler`: `logging.Handler` instance. Defaults to `StreamHandler` outputting to `stdout` if logging is enabled and this param is left out. Can be used to set a `FileHandler`, for example.
+- `formatter`: `logging.Formatter` instance. Defaults to `"%(asctime)s - %(name)s - %(levelname)s: %(message)s"` if logging is enabled and this param is left out. Can be used to set a different format.
 
 ### Example logging usage
 ```python
@@ -29,7 +29,7 @@ from ftva_etl.metadata.utils import configure_logging
 # EXAMPLE: configure file-based logging at the WARNING level.
 # DEBUG and INFO messages will be ignored, while WARNING and above will be captured.
 custom_handler = logging.FileHandler("example.log")
-configure_logging(enable_logging=True, log_level=logging.WARNING, handler=handler)
+configure_logging(enable_logging=True, log_level=logging.WARNING, handler=custom_handler)
 
 # Continue using package as normal
 # get_mams_metadata(), etc
