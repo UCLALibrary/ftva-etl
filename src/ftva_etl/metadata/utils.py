@@ -165,7 +165,6 @@ def configure_logging(
     # Use the package name (i.e. `ftva_etl.metadata`) to get a logger
     # that will be a child of the logger created on package import.
     logger = logging.getLogger(__package__)
-    logger.setLevel(log_level)
 
     # Reset the handlers to prevent multiple handlers being added
     _reset_handlers(logger)
@@ -177,6 +176,8 @@ def configure_logging(
         logger.addHandler(logging.NullHandler())
         return
 
+    # Set the logger level, which defaults to INFO.
+    logger.setLevel(log_level)
     # Default to logging to stdout.
     # stdout is specified explicitly, as default is stderr.
     if handler is None:
