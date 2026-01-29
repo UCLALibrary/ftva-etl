@@ -1,6 +1,9 @@
 import spacy
+
 from fmrest.record import Record as FM_Record
 from pymarc import Record as Pymarc_Record
+from typing import Optional
+
 from .digital_data import (
     get_asset_type,
     get_dcp_info,
@@ -28,16 +31,18 @@ from .marc import (
 
 
 def get_mams_metadata(
-    bib_record: Pymarc_Record,
-    filemaker_record: FM_Record,
     digital_data_record: dict,
-    match_asset_uuid: str | None = None,
+    filemaker_record: FM_Record,
+    bib_record: Optional[Pymarc_Record] = None,
+    match_asset_uuid: Optional[str] = None,
 ) -> dict:
     """Generate JSON metadata for ingest into the FTVA MAMS.
 
-    :param bib_record: A pymarc record, expected to contain bibliographic data.
-    :param filemaker_record: A fmrest filemaker record.
     :param digital_data_record: A dict containing an FTVA digital data record.
+    :param filemaker_record: A fmrest filemaker record.
+        Optional to support multiple types of matching (e.g. DD-FM-Alma or DD-FM only).
+    :param bib_record: A pymarc record, expected to contain bibliographic data.
+        Optional to support multiple types of matching (e.g. DD-FM-Alma or DD-FM only).
     :param match_asset_uuid: A string representation of an asset's UUID. Defaults to None.
     :return asset: A dict of metadata combined from the input records.
     """
@@ -48,24 +53,23 @@ def get_mams_metadata(
     # may be for batch processing.
     nlp_model = spacy.load("en_core_web_md")
 
-    # Used for some special handling of serial titles
-    is_series = is_series_production_type(filemaker_record)
-
-    # This gets a collection of titles which will be unpacked later.
-    titles = get_title_info(bib_record, is_series)
-
-    # Get the date and qualifier.
-    date_info = get_date_info(bib_record)
-
-    # Get the rest of the data and prepare it for return.
-    metadata = {
-        "alma": {
+    alma_metadata = {}
+    if bib_record:
+        # Used for some special handling of serial titles
+        is_series = is_series_production_type(filemaker_record)
+        # This gets a collection of titles which will be unpacked later.
+        titles = get_title_info(bib_record, is_series)
+        alma_metadata = {
             "alma_bib_id": get_bib_id(bib_record),
             "language": get_alma_language_name(bib_record),
             "creators": get_alma_creators(bib_record, nlp_model),
             **titles,
-            **date_info,
-        },
+            **get_alma_date_info(bib_record),
+        }
+
+    # Get the rest of the data and prepare it for return.
+    metadata = {
+        "alma": alma_metadata,
         "filemaker": {
             "inventory_id": get_inventory_id(filemaker_record),
             # All records returned from FM
