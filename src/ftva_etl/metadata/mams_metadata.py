@@ -15,6 +15,8 @@ from .filemaker import (
     get_inventory_number,
     is_series_production_type,
     get_creators as get_fm_creators,
+    get_date_info as get_fm_date_info,
+    get_language_name as get_fm_language_name,
 )
 from .marc import (
     get_bib_id,
@@ -73,6 +75,8 @@ def get_mams_metadata(
             # from FM or other sources, if needed.
             "inventory_numbers": [get_inventory_number(filemaker_record)],
             "creators": get_fm_creators(filemaker_record),
+            "language": get_fm_language_name(filemaker_record),
+            **get_fm_date_info(filemaker_record),
         },
         "uuid": get_uuid(digital_data_record),
         "file_name": get_file_name(digital_data_record),
