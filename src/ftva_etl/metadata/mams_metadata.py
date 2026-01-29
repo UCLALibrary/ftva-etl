@@ -24,7 +24,7 @@ from .filemaker import (
 from .marc import (
     get_bib_id,
     get_creators as get_alma_creators,
-    get_date_info,
+    get_date_info as get_alma_date_info,
     get_language_name as get_alma_language_name,
     get_title_info,
 )

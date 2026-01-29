@@ -1,6 +1,7 @@
 from unittest import TestCase
 from src.ftva_etl.metadata.filemaker import (
     is_series_production_type,
+    get_date_info,
 )
 from fmrest.record import Record
 
