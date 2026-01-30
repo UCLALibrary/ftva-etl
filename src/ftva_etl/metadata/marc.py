@@ -1,5 +1,5 @@
 from pymarc import Record
-from .utils import parse_date, strip_whitespace_and_punctuation, _get_language_map
+from .utils import parse_date, strip_whitespace_and_punctuation, get_language_map
 
 # for type hinting
 from spacy.language import Language
@@ -206,7 +206,7 @@ def get_language_name(bib_record: Record) -> str:
     # Load language mapping data.
     # TODO: should this be hard-coded? We'll only have 1;
     # regenerate it if missing?
-    language_map = _get_language_map()
+    language_map = get_language_map()
 
     language_code = _get_language_code_from_bib(bib_record)
     language_name = language_map.get(language_code, "")

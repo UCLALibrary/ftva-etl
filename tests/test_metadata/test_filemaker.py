@@ -54,11 +54,9 @@ class TestFilemakerDateInfo(TestCase):
         # and 2nd elem is expected result from get_date_info()
         test_cases = [
             # Summary of specs:
-            # - If release_broadcast_year is not empty, parse it as the release_broadcast_date;
-            # - else if record_date is not empty, parse it as the production_date.
-            # - If neither is present, return a dict with release_broadcast_date as an empty string.
-            # - In all cases, release_broadcast_date should be present in the output dict,
-            # but production_date should be present only if it is not empty.
+            # - If release_broadcast_year is not empty, map it to release_broadcast_date;
+            # - else if record_date is not empty, map it to production_date.
+            # - If neither is present, return an empty dict.
             (
                 {
                     "release_broadcast_year": "1997",
@@ -74,7 +72,12 @@ class TestFilemakerDateInfo(TestCase):
             # only record_date present
             (
                 {"release_broadcast_year": "", "record_date": "11/9/2004"},
-                {"release_broadcast_date": "", "production_date": "11/9/2004"},
+                {"production_date": "11/9/2004"},
+            ),
+            # neither present
+            (
+                {"release_broadcast_year": "", "record_date": ""},
+                {},
             ),
         ]
 

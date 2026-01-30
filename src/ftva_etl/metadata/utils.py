@@ -136,7 +136,7 @@ def _is_inventory_number_match(inventory_number: str, call_number: str) -> bool:
     return False
 
 
-def _get_language_map(file_name: str = "language_map.json") -> dict:
+def get_language_map(file_name: str = "language_map.json") -> dict:
     """Load the language map from a file.
 
     :param file_name: name of the language map file, with no extra path info.

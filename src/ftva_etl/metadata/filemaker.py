@@ -65,12 +65,12 @@ def get_date_info(fm_record: Record) -> dict:
     :param fm_record: A Filemaker record.
     :return: A dict containing the date info.
     """
-    # If FM data has `release_broadcast_year`, use it as the `release_broadcast_date`.
-    # Else, if FM data has `record_date`, use it as the `production_date`.
-    # Else, return a dict with `release_broadcast_date` as an empty string.
+    # If FM data has `release_broadcast_year`, map it to `release_broadcast_date`.
+    # Else, if FM data has `record_date`, map it to `production_date`.
+    # Else, return an empty dict.
     # NOTE: we're taking values as-is from FM here,
     # mapping them to the date-like keys in the MAMS metadata.
-    date_info = {"release_broadcast_date": ""}
+    date_info = {}
 
     if fm_record.release_broadcast_year.strip() != "":
         date_info["release_broadcast_date"] = fm_record.release_broadcast_year
