@@ -55,7 +55,8 @@ def get_language_name(fm_record: Record) -> str:
     :param fm_record: A Filemaker record.
     :return: The language name as a string.
     """
-    return fm_record.language
+    # NOTE: field name is capitalized in FM
+    return fm_record.Language
 
 
 def get_date_info(fm_record: Record) -> dict:
