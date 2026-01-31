@@ -47,3 +47,34 @@ def get_creators(fm_record: Record) -> list:
     # as that appears to be how the data is formatted in Filemaker.
     # If other delimiters are used, they should probably be made consistent on the FM side.
     return [creator.strip() for creator in fm_record.director.split(",")]
+
+
+def get_language_name(fm_record: Record) -> str:
+    """Get the language name from a Filemaker record.
+
+    :param fm_record: A Filemaker record.
+    :return: The language name as a string.
+    """
+    # NOTE: field name is capitalized in FM
+    return fm_record.Language
+
+
+def get_date_info(fm_record: Record) -> dict:
+    """Get the date info from a Filemaker record.
+
+    :param fm_record: A Filemaker record.
+    :return: A dict containing the date info.
+    """
+    # If FM data has `release_broadcast_year`, map it to `release_broadcast_date`.
+    # Else, if FM data has `record_date`, map it to `production_date`.
+    # Else, return an empty dict.
+    # NOTE: we're taking values as-is from FM here,
+    # mapping them to the date-like keys in the MAMS metadata.
+    date_info = {}
+
+    if fm_record.release_broadcast_year.strip() != "":
+        date_info["release_broadcast_date"] = fm_record.release_broadcast_year
+    elif fm_record.record_date.strip() != "":
+        date_info["production_date"] = fm_record.record_date
+
+    return date_info

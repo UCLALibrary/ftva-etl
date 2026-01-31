@@ -1,7 +1,5 @@
-import json
-from importlib.resources import open_text
 from pymarc import Record
-from .utils import parse_date, strip_whitespace_and_punctuation
+from .utils import parse_date, strip_whitespace_and_punctuation, get_language_map
 
 # for type hinting
 from spacy.language import Language
@@ -170,19 +168,6 @@ def get_creators(bib_record: Record, model: Language) -> list:
 
 
 # region Languages
-def _get_language_map(file_name: str = "language_map.json") -> dict:
-    """Load the language map from a file.
-
-    :param file_name: name of the language map file, with no extra path info.
-    :return: Dictionary with language code:name data.
-    """
-    # importlib.resources.open_text() requires package path:
-    # here, this is ftva_etl.metadata.data
-    package_name = f"{__package__}.data"
-    with open_text(package_name, file_name) as f:
-        return json.load(f)
-
-
 def _get_language_code_from_bib(bib_record: Record) -> str:
     """Extract the language code from a MARC bib record.
 
@@ -221,7 +206,7 @@ def get_language_name(bib_record: Record) -> str:
     # Load language mapping data.
     # TODO: should this be hard-coded? We'll only have 1;
     # regenerate it if missing?
-    language_map = _get_language_map()
+    language_map = get_language_map()
 
     language_code = _get_language_code_from_bib(bib_record)
     language_name = language_map.get(language_code, "")

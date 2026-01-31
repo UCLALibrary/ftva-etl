@@ -1,5 +1,7 @@
 import dateutil.parser
 import string
+import json
+from importlib.resources import open_text
 
 
 def parse_date(date_string: str) -> str:
@@ -132,3 +134,16 @@ def _is_inventory_number_match(inventory_number: str, call_number: str) -> bool:
                     return True
 
     return False
+
+
+def get_language_map(file_name: str = "language_map.json") -> dict:
+    """Load the language map from a file.
+
+    :param file_name: name of the language map file, with no extra path info.
+    :return: Dictionary with language code:name data.
+    """
+    # importlib.resources.open_text() requires package path:
+    # here, this is ftva_etl.metadata.data
+    package_name = f"{__package__}.data"
+    with open_text(package_name, file_name) as f:
+        return json.load(f)
