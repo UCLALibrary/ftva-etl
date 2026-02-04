@@ -1,0 +1,24 @@
+name: Build and Release Tagged Python Package
+on: workflow_dispatch
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ">=3.13"
+
+      - name: Read version from pyproject.toml
+        uses: SebRollen/toml-action@v1.2.0
+        id: read_toml
+        with:
+          file: 'pyproject.toml'
+          field: 'project.version'
+
+      - run: echo "VERSION=${{ steps.read_toml.outputs.value }}"
+
