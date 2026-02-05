@@ -1,6 +1,8 @@
 name: Build and Release Tagged Python Package
-on: 
+on:
   push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -21,14 +23,8 @@ jobs:
       - name: Install Hatch
         uses: pypa/hatch@install
 
-      - name: Read version from pyproject.toml
-        uses: SebRollen/toml-action@v1.2.0
-        id: read_toml
-        with:
-          file: 'pyproject.toml'
-          field: 'project.version'
-
-      - run: echo "VERSION=${{ steps.read_toml.outputs.value }}"
+      - name: Read version to ENV
+        run: echo "VERSION=$(hatch version)" >> $GITHUB_ENV
 
       - name: Build wheel
         run: hatch build -t wheel
@@ -36,8 +32,7 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          name: Release v${{ steps.read_toml.outputs.value }}
-          tag_name: v${{ steps.read_toml.outputs.value }}
-          draft: true
+          tag_name: v${{ env.VERSION }}
+          name: Release v${{ env.VERSION }}
           files: dist/*.whl
-
+          body_path: CHANGELOG.md
