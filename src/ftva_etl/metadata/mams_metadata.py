@@ -20,13 +20,14 @@ from .filemaker import (
     get_creators as get_fm_creators,
     get_date_info as get_fm_date_info,
     get_language_name as get_fm_language_name,
+    get_title_info as get_fm_title_info,
 )
 from .marc import (
     get_bib_id,
     get_creators as get_alma_creators,
     get_date_info as get_alma_date_info,
     get_language_name as get_alma_language_name,
-    get_title_info,
+    get_title_info as get_alma_title_info,
 )
 
 
@@ -42,7 +43,7 @@ def get_alma_metadata(
     :return: A dict containing the Alma metadata needed for the MAMS.
     """
     # This gets a collection of titles which will be unpacked later.
-    titles = get_title_info(bib_record, is_series)
+    titles = get_alma_title_info(bib_record, is_series)
     return {
         "alma_bib_id": get_bib_id(bib_record),
         "language": get_alma_language_name(bib_record),
@@ -58,6 +59,9 @@ def get_filemaker_metadata(filemaker_record: FM_Record) -> dict:
     :param filemaker_record: A Filemaker record.
     :return: A dict containing the Filemaker metadata needed for the MAMS.
     """
+    titles = get_fm_title_info(
+        filemaker_record, is_series_production_type(filemaker_record)
+    )
     return {
         "inventory_id": get_inventory_id(filemaker_record),
         # All records returned from FM
@@ -68,6 +72,7 @@ def get_filemaker_metadata(filemaker_record: FM_Record) -> dict:
         "inventory_numbers": [get_inventory_number(filemaker_record)],
         "creators": get_fm_creators(filemaker_record),
         "language": get_fm_language_name(filemaker_record),
+        **titles,
         **get_fm_date_info(filemaker_record),
     }
 
