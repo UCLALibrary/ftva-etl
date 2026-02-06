@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.1.4 - 2026-01-27
+
+### Added
+
+- Logging enabled, with configuration options exposed by `ftva_etl.metadata.utils.configure_logging()`.
+
+### Changed
+
+- Logs are generated when `creators` cannot be recognized unambiguously from MARC 245 $c.
+
+### Fixed
+
+- Parsing of `creators` from MARC 245 $c is improved by allowing more flexible attribution phrases.
+
+## 0.1.3 - 2025-11-13
+
+### Changes
+
+- Handling of `title` and `date` fields from MARC records is updated.
+- `inventory_number` field is pluralized to `inventory_numbers`
+
 ## 0.1.2 - 2025-10-20
 
 ### Fixed
