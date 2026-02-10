@@ -1,10 +1,14 @@
+import json
+import logging
+from importlib.resources import open_text
 from pymarc import Record
-from .utils import parse_date, strip_whitespace_and_punctuation, get_language_map
+from .utils import parse_date, strip_whitespace_and_punctuation
 
 # for type hinting
 from spacy.language import Language
 
-# Code which extracts data from a NARC record.
+# Create a module logger, which will be a child of the package logger
+logger = logging.getLogger(__name__)
 
 
 # region Dates
@@ -126,29 +130,25 @@ def _parse_creators(source_string: str, model: Language) -> list[str]:
 
     attribution_phrases = [
         "directed by",
-        "director",  # This will also match "directors"
+        "directed and written by",
+        "director",  # This will also match "directors" or "producer-director"
         "a film by",
         "supervised by",
     ]
-    # Find location of the first attribution phrase
+
+    # Find the first attribution phrase in the source string,
+    # and set the creator string for processing by the NER model.
     for phrase in attribution_phrases:
         if phrase in source_string.lower():
-            start_index = source_string.lower().find(phrase) + len(phrase)
-            # Extract substring after the phrase until the end of the string
-            # TODO: Does this work in general? Could a director be listed before
-            # a non-director role that we shoudn't include?
-            creator_string = source_string[start_index:].strip()
+            creator_string = source_string.strip()
             break
 
+    # If no attribution phrase is found, return an empty list.
     if not creator_string:
         return []
 
     doc = model(creator_string)
-    creators = []
-    for ent in doc.ents:
-        if ent.label_ == "PERSON":
-            creators.append(ent.text)
-    return creators
+    return [ent.text for ent in doc.ents]
 
 
 def get_creators(bib_record: Record, model: Language) -> list:
@@ -161,6 +161,13 @@ def get_creators(bib_record: Record, model: Language) -> list:
     parsed_creators = []
     for creator in creators:
         parsed_creators.extend(_parse_creators(creator, model))
+    # Log a message if 245$c contains a value, but no creators can be parsed.
+    # This is to facilitate manual review of the record for unanticipated attribution phrases.
+    if creators and not parsed_creators:
+        logger.info(
+            f"Field 245$c on MMS ID {get_record_id(bib_record)} contains a value, "
+            f"but no creators could be parsed. 245$c values: {creators}"
+        )
     return parsed_creators
 
 
@@ -168,6 +175,19 @@ def get_creators(bib_record: Record, model: Language) -> list:
 
 
 # region Languages
+def _get_language_map(file_name: str = "language_map.json") -> dict:
+    """Load the language map from a file.
+
+    :param file_name: name of the language map file, with no extra path info.
+    :return: Dictionary with language code:name data.
+    """
+    # importlib.resources.open_text() requires package path:
+    # here, this is ftva_etl.metadata.data
+    package_name = f"{__package__}.data"
+    with open_text(package_name, file_name) as f:
+        return json.load(f)
+
+
 def _get_language_code_from_bib(bib_record: Record) -> str:
     """Extract the language code from a MARC bib record.
 
@@ -206,7 +226,7 @@ def get_language_name(bib_record: Record) -> str:
     # Load language mapping data.
     # TODO: should this be hard-coded? We'll only have 1;
     # regenerate it if missing?
-    language_map = get_language_map()
+    language_map = _get_language_map()
 
     language_code = _get_language_code_from_bib(bib_record)
     language_name = language_map.get(language_code, "")

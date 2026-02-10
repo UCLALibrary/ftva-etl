@@ -20,13 +20,14 @@ from .filemaker import (
     get_creators as get_fm_creators,
     get_date_info as get_fm_date_info,
     get_language_name as get_fm_language_name,
+    get_title_info as get_fm_title_info,
 )
 from .marc import (
     get_bib_id,
     get_creators as get_alma_creators,
     get_date_info as get_alma_date_info,
     get_language_name as get_alma_language_name,
-    get_title_info,
+    get_title_info as get_alma_title_info,
 )
 
 
@@ -42,7 +43,7 @@ def get_alma_metadata(
     :return: A dict containing the Alma metadata needed for the MAMS.
     """
     # This gets a collection of titles which will be unpacked later.
-    titles = get_title_info(bib_record, is_series)
+    titles = get_alma_title_info(bib_record, is_series)
     return {
         "alma_bib_id": get_bib_id(bib_record),
         "language": get_alma_language_name(bib_record),
@@ -52,12 +53,14 @@ def get_alma_metadata(
     }
 
 
-def get_filemaker_metadata(filemaker_record: FM_Record) -> dict:
+def get_filemaker_metadata(filemaker_record: FM_Record, is_series: bool) -> dict:
     """Get the Filemaker metadata from a Filemaker record.
 
     :param filemaker_record: A Filemaker record.
+    :param is_series: Whether the record is a series, derived from Filemaker record.
     :return: A dict containing the Filemaker metadata needed for the MAMS.
     """
+    titles = get_fm_title_info(filemaker_record, is_series)
     return {
         "inventory_id": get_inventory_id(filemaker_record),
         # All records returned from FM
@@ -68,6 +71,7 @@ def get_filemaker_metadata(filemaker_record: FM_Record) -> dict:
         "inventory_numbers": [get_inventory_number(filemaker_record)],
         "creators": get_fm_creators(filemaker_record),
         "language": get_fm_language_name(filemaker_record),
+        **titles,
         **get_fm_date_info(filemaker_record),
     }
 
@@ -98,7 +102,7 @@ def get_mams_metadata(
     # Determine if the record is a series, as determined by the Filemaker record.
     is_series = is_series_production_type(filemaker_record)
 
-    filemaker_metadata = get_filemaker_metadata(filemaker_record)
+    filemaker_metadata = get_filemaker_metadata(filemaker_record, is_series)
 
     alma_metadata = (
         get_alma_metadata(bib_record, nlp_model, is_series) if bib_record else {}
