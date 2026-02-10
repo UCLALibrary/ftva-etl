@@ -53,15 +53,14 @@ def get_alma_metadata(
     }
 
 
-def get_filemaker_metadata(filemaker_record: FM_Record) -> dict:
+def get_filemaker_metadata(filemaker_record: FM_Record, is_series: bool) -> dict:
     """Get the Filemaker metadata from a Filemaker record.
 
     :param filemaker_record: A Filemaker record.
+    :param is_series: Whether the record is a series, derived from Filemaker record.
     :return: A dict containing the Filemaker metadata needed for the MAMS.
     """
-    titles = get_fm_title_info(
-        filemaker_record, is_series_production_type(filemaker_record)
-    )
+    titles = get_fm_title_info(filemaker_record, is_series)
     return {
         "inventory_id": get_inventory_id(filemaker_record),
         # All records returned from FM
@@ -103,7 +102,7 @@ def get_mams_metadata(
     # Determine if the record is a series, as determined by the Filemaker record.
     is_series = is_series_production_type(filemaker_record)
 
-    filemaker_metadata = get_filemaker_metadata(filemaker_record)
+    filemaker_metadata = get_filemaker_metadata(filemaker_record, is_series)
 
     alma_metadata = (
         get_alma_metadata(bib_record, nlp_model, is_series) if bib_record else {}
