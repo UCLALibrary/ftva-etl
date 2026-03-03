@@ -19,6 +19,8 @@ class TestDigitalData(TestCase):
         # Note that these methods may rename some field names, which is intentional.
         self.assertEqual(dcp_info["folder_name"], "folder name")
         self.assertEqual(dcp_info["sub_folder_name"], "sub folder name")
+        # `file_type` should not be present
+        self.assertNotIn("file_type", dcp_info)
 
     def test_dpx_info(self):
         # Very simple Digital Data record for DPX.
@@ -37,3 +39,5 @@ class TestDigitalData(TestCase):
         self.assertEqual(dpx_info["folder_name"], "folder name")
         # For DPX, do not include subfolders.
         self.assertNotIn("sub_folder_name", dpx_info)
+        # For DPX only, `file_type` should be "DPX"
+        self.assertEqual(dpx_info["file_type"], "DPX")
