@@ -55,6 +55,7 @@ def get_dpx_info(dd_record: dict) -> dict:
         # File name must always be empty for DPXs.
         "file_name": "",
         "folder_name": get_folder_name(dd_record),
+        "file_type": "DPX",  # Required by MAMS only for DPX files. Hard-coded here.
     }
 
 
