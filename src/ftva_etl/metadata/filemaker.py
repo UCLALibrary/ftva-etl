@@ -126,8 +126,9 @@ def get_title_info(fm_record: Record, is_series: bool) -> dict:
 
     # For series, we want the series title, episode title, and episode number (if available).
 
-    fm_ep_title = fm_record.ep_title.strip()
-    fm_ep_no = fm_record.ep_no.strip()
+    fm_ep_title = fm_record.episode_title.strip()
+    # Space in field name means we have to use dict-style access to get the episode number field.
+    fm_ep_no = fm_record["episode no."].strip()
 
     if fm_title and fm_ep_title and fm_ep_no:
         series_title = fm_title

@@ -153,8 +153,8 @@ class TestFilemakerTitleInfo(TestCase):
                 {
                     "production_type": "television series\rfoo\rbar",
                     "title": "Series Title 1",
-                    "ep_title": "Episode Title 1",
-                    "ep_no": "Episode 1",
+                    "episode_title": "Episode Title 1",
+                    "episode no.": "Episode 1",
                 },
                 {
                     "title": "Series Title 1. Episode Title 1. Episode 1",
@@ -166,8 +166,8 @@ class TestFilemakerTitleInfo(TestCase):
                 {
                     "production_type": "television series\rfoo\rbar",
                     "title": "Series Title 2",
-                    "ep_title": "",
-                    "ep_no": "",
+                    "episode_title": "",
+                    "episode no.": "",
                 },
                 {"title": "Series Title 2"},
             ),
@@ -175,8 +175,8 @@ class TestFilemakerTitleInfo(TestCase):
                 {
                     "production_type": "television series\rfoo\rbar",
                     "title": "Series Title 3",
-                    "ep_title": "Episode Title 3",
-                    "ep_no": "",
+                    "episode_title": "Episode Title 3",
+                    "episode no.": "",
                 },
                 {
                     "title": "Series Title 3. Episode Title 3",
@@ -188,8 +188,8 @@ class TestFilemakerTitleInfo(TestCase):
                 {
                     "production_type": "television series\rfoo\rbar",
                     "title": "Series Title 4",
-                    "ep_title": "",
-                    "ep_no": "Episode 4",
+                    "episode_title": "",
+                    "episode no.": "Episode 4",
                 },
                 {
                     "title": "Series Title 4. Episode 4",
@@ -206,8 +206,8 @@ class TestFilemakerTitleInfo(TestCase):
                     "modId",
                     "production_type",
                     "title",
-                    "ep_title",
-                    "ep_no",
+                    "episode_title",
+                    "episode no.",
                 ],
                 values=[
                     index,
@@ -215,8 +215,8 @@ class TestFilemakerTitleInfo(TestCase):
                     0,
                     test_case[0]["production_type"],
                     test_case[0].get("title", ""),
-                    test_case[0].get("ep_title", ""),
-                    test_case[0].get("ep_no", ""),
+                    test_case[0].get("episode_title", ""),
+                    test_case[0].get("episode no.", ""),
                 ],
             )
             for index, test_case in enumerate(test_cases)
