@@ -91,8 +91,53 @@ class FilemakerClient:
             if field in fm_record.to_dict()
         }
 
-    def _search_filemaker(self, index: str, search_term: str) -> list[Record]:
+    def get_records(self, offset: int, limit: int, **kwargs) -> list[Record]:
+        """Convenience wrapper around `_fms.get_records()`.
 
+        :param int offset: The offset of the first record to return.
+        :param int limit: The number of records to return.
+        :param kwargs: Additional arguments to pass to `_fms.get_records()`.
+         See docs for `fmrest.Server.get_records()` for usage details.
+        :return: A list of Filemaker records.
+        :raises FileMakerError: If an unknown error occurs while fetching records;
+        tries to handle anticipated Filemaker error signaling offset is out of bounds.
+        """
+        try:
+            # `get_records()` returns a Foundset by default.
+            # Convert to list to make getting its length easier.
+            return list(self._fms.get_records(offset=offset, limit=limit, **kwargs))
+        except FileMakerError as error:
+            # FileMakerError doesn't provide the error code as an integer,
+            # but rather as a string message, so check the string for
+            # error 101, which represents "Record is missing",
+            # indicating offset is out of bounds.
+            # Filemaker error codes @https://help.claris.com/en/pro-help/content/error-codes.html
+            if "error 101" in error.args[0]:
+                return []  # no more records; offset is out of bounds
+            raise  # re-raise the error if it's something other than 101
+
+    def edit_record(self, record_id: int, field_data: dict, **kwargs) -> bool:
+        """Convenience wrapper around `_fms.edit_record()`.
+
+        :param int record_id: The id of the record to edit.
+        :param dict field_data: A dict of field data to edit the record with.
+        :param kwargs: Additional arguments to pass to `_fms.edit_record()`.
+         See docs for `fmrest.Server.edit_record()` for usage details.
+        :return: True if the record was edited successfully, False otherwise.
+        """
+        return self._fms.edit_record(
+            record_id=record_id, field_data=field_data, **kwargs
+        )
+
+    def _search_filemaker(self, index: str, search_term: str) -> list[Record]:
+        """Search the Filemaker database for records matching the given index and search term.
+
+        :param str index: The index to search on.
+        :param str search_term: The search term to match.
+        :return: A list of Filemaker records matching the given index and search term.
+        :raises FileMakerError: If an unknown error occurs while searching the database;
+        tries to handle anticipated Filemaker error signaling no records found.
+        """
         # Use Filemaker syntax for exact match (==) in query.
         # TODO: Extend this, if/when needed.
         query = [{index: f"=={search_term}"}]
