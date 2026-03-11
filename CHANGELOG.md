@@ -1,4 +1,9 @@
 # Changelog
+## 0.2.0 - 2026-03-04
+
+### Fixed
+
+- Fixed logic for obtaining episode title metadata from Filemaker records.
 
 ## 0.1.5 - 2026-03-03
 
