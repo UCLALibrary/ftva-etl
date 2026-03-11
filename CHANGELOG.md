@@ -1,4 +1,9 @@
 # Changelog
+## 0.2.1 - 2026-03-11
+
+### Changed
+- Merged changes from `legacy_fm_changes` branch, which includes functionality for obtaining metadata from legacy records matching only Filemaker data.
+
 ## 0.2.0 - 2026-03-04
 
 ### Fixed
