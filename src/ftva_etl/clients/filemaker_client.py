@@ -1,5 +1,9 @@
 import fmrest
 from fmrest.record import Record
+
+# NOTE: FileMakerError does not provide error codes as integers,
+# but rather as string messages, which is why our handlers check for sub-strings.
+# See Filemaker error codes reference @https://help.claris.com/en/pro-help/content/error-codes.html
 from fmrest.exceptions import FileMakerError
 
 
@@ -91,13 +95,22 @@ class FilemakerClient:
             if field in fm_record.to_dict()
         }
 
-    def get_record(self, record_id: int, **kwargs) -> Record:
+    def get_record(self, record_id: int, **kwargs) -> Record | None:
         """Convenience wrapper around `_fms.get_record()`.
 
         :param int record_id: The id of the record to get.
-        :return: A Filemaker record.
+        :param kwargs: Additional arguments to pass to `_fms.get_record()`.
+         See docs for `fmrest.Server.get_record()` for usage details.
+        :return: A Filemaker record, or None if the record is not found.
+        :raises FileMakerError: If an unknown error occurs while fetching the record.
         """
-        return self._fms.get_record(record_id=record_id, **kwargs)
+        try:
+            return self._fms.get_record(record_id=record_id, **kwargs)
+        except FileMakerError as error:
+            # Error 101 represents "Record is missing" (i.e. not found).
+            if "error 101" in error.args[0]:
+                return None  # record is not found
+            raise  # re-raise the error if it's something other than 101
 
     def get_records(self, offset: int, limit: int, **kwargs) -> list[Record]:
         """Convenience wrapper around `_fms.get_records()`.
@@ -115,24 +128,25 @@ class FilemakerClient:
             # Convert to list to make getting its length easier.
             return list(self._fms.get_records(offset=offset, limit=limit, **kwargs))
         except FileMakerError as error:
-            # FileMakerError doesn't provide the error code as an integer,
-            # but rather as a string message, so check the string for
-            # error 101, which represents "Record is missing",
-            # indicating offset is out of bounds.
-            # Filemaker error codes @https://help.claris.com/en/pro-help/content/error-codes.html
+            # Error 101 "Record is missing"
+            # indicates offset is out of bounds in this case.
             if "error 101" in error.args[0]:
-                return []  # no more records; offset is out of bounds
+                return []  # return empty list if offset is out of bounds
             raise  # re-raise the error if it's something other than 101
 
     def edit_record(self, record_id: int, field_data: dict, **kwargs) -> bool:
         """Convenience wrapper around `_fms.edit_record()`.
 
         :param int record_id: The id of the record to edit.
-        :param dict field_data: A dict of field data to edit the record with.
+        :param dict field_data: A dict of fields names and values to edit the record with.
+          Only fields named in the dict will be edited.
         :param kwargs: Additional arguments to pass to `_fms.edit_record()`.
          See docs for `fmrest.Server.edit_record()` for usage details.
         :return: True if the record was edited successfully, False otherwise.
+        :raises FileMakerError: If an unknown error occurs while editing the record.
         """
+        # `field_data` need only contain the fields that are targeted for editing.
+        # Any fields not named in `field_data` will not be overwritten or cleared.
         return self._fms.edit_record(
             record_id=record_id, field_data=field_data, **kwargs
         )
@@ -156,16 +170,11 @@ class FilemakerClient:
             # Also the date format in `find()` defaults to US format (MM-DD-YYYY);
             # set it to ISO-8601 (YYYY-MM-DD) instead.
             foundset = self._fms.find(query, date_format="iso-8601")
-            # If no exception is raised, then foundset has 1 or more records.
-            # Return it as a list to be consistent with empty list returned if no records found.
+            # Return list to be consistent with empty list returned if no records found.
             return list(foundset)
         except FileMakerError as error:
-            # FileMakerError doesn't provide the error code as an integer,
-            # but rather as a string message, so check the string for
-            # error 401, which represents "no records found".
-            # Filemaker error codes @https://help.claris.com/en/pro-help/content/error-codes.html
-            error_message = error.args[0]  # error message is first item in `args` tuple
+            # Error 401 represents "No records found"
+            error_message = error.args[0]
             if "error 401" in error_message:
                 return []  # if no records found, return an empty list
-            # Re-raise the error if it's something other than 401--no records found
-            raise error
+            raise  # re-raise the error if it's something other than 401
