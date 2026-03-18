@@ -91,6 +91,14 @@ class FilemakerClient:
             if field in fm_record.to_dict()
         }
 
+    def get_record(self, record_id: int, **kwargs) -> Record:
+        """Convenience wrapper around `_fms.get_record()`.
+
+        :param int record_id: The id of the record to get.
+        :return: A Filemaker record.
+        """
+        return self._fms.get_record(record_id=record_id, **kwargs)
+
     def get_records(self, offset: int, limit: int, **kwargs) -> list[Record]:
         """Convenience wrapper around `_fms.get_records()`.
 
