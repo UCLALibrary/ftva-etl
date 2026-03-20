@@ -1,4 +1,5 @@
 import spacy
+import logging
 
 from fmrest.record import Record as FM_Record
 from pymarc import Record as Pymarc_Record
@@ -29,6 +30,10 @@ from .marc import (
     get_language_name as get_alma_language_name,
     get_title_info as get_alma_title_info,
 )
+
+
+# Create a module logger, which will be a child of the package logger
+logger = logging.getLogger(__name__)
 
 
 def get_alma_metadata(
@@ -76,13 +81,14 @@ def get_filemaker_metadata(filemaker_record: FM_Record, is_series: bool) -> dict
     }
 
 
-def get_mams_metadata(
+def _get_source_metadata(
     digital_data_record: dict,
     filemaker_record: FM_Record,
     bib_record: Optional[Pymarc_Record] = None,
     match_asset_uuid: Optional[str] = None,
 ) -> dict:
-    """Generate JSON metadata for ingest into the FTVA MAMS.
+    """Retrieve and combine metadata from the source records into a single dict, for
+    further processing and eventual output to the MAMS.
 
     :param digital_data_record: A dict containing an FTVA digital data record.
     :param filemaker_record: A fmrest filemaker record.
@@ -133,4 +139,49 @@ def get_mams_metadata(
         # No special action needed
         pass
 
+    return metadata
+
+
+def get_mams_metadata(
+    digital_data_record: dict,
+    filemaker_record: FM_Record,
+    bib_record: Optional[Pymarc_Record] = None,
+    match_asset_uuid: Optional[str] = None,
+) -> dict:
+    """Format the source metadata for output to the MAMS.
+
+    :param digital_data_record: A dict containing an FTVA digital data record.
+    :param filemaker_record: A fmrest filemaker record.
+        Optional to support multiple types of matching (e.g. DD-FM-Alma or DD-FM only).
+    :param bib_record: A pymarc record, expected to contain bibliographic data.
+        Optional to support multiple types of matching (e.g. DD-FM-Alma or DD-FM only).
+    :param match_asset_uuid: A string representation of an asset's UUID. Defaults to None.
+    :return: A dict containing the metadata formatted for output to the MAMS.
+    """
+    source_metadata = _get_source_metadata(
+        digital_data_record, filemaker_record, bib_record, match_asset_uuid
+    )
+    metadata = {
+        "alma_bib_id": source_metadata.get("alma", {}).get("alma_bib_id"),
+        "inventory_id": source_metadata.get("filemaker", {}).get("inventory_id"),
+        "uuid": source_metadata.get("uuid"),
+        # All records returned from FM
+        # should have only one inventory number for now,
+        # but MAMS expects an array in JSON, so wrap in a list.
+        # TODO: Parse comma-separated or otherwise delimited inventory numbers
+        # from FM or other sources, if needed.
+        "inventory_numbers": source_metadata.get("filemaker", {}).get(
+            "inventory_numbers", []
+        ),
+        "creators": source_metadata.get("alma", {}).get("creators", []),
+        "language": source_metadata.get("alma", {}).get("language", ""),
+        "file_name": source_metadata.get("filemaker", {}).get("file_name", ""),
+        "asset_type": source_metadata.get("filemaker", {}).get("asset_type", ""),
+        "media_type": source_metadata.get("filemaker", {}).get("media_type", ""),
+        "audio_class": source_metadata.get("filemaker", {}).get("audio_class", ""),
+        "titles": {source_metadata.get("alma", {}).get("titles", {})}
+        | source_metadata.get("filemaker", {}).get("titles", {}),
+        "date_info": {source_metadata.get("alma", {}).get("date_info", {})}
+        | source_metadata.get("filemaker", {}).get("date_info", {}),
+    }
     return metadata
