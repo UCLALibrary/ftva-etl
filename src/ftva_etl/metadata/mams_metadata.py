@@ -179,9 +179,9 @@ def get_mams_metadata(
         "asset_type": source_metadata.get("filemaker", {}).get("asset_type", ""),
         "media_type": source_metadata.get("filemaker", {}).get("media_type", ""),
         "audio_class": source_metadata.get("filemaker", {}).get("audio_class", ""),
-        "titles": {source_metadata.get("alma", {}).get("titles", {})}
+        "titles": source_metadata.get("alma", {}).get("titles", {})
         | source_metadata.get("filemaker", {}).get("titles", {}),
-        "date_info": {source_metadata.get("alma", {}).get("date_info", {})}
+        "date_info": source_metadata.get("alma", {}).get("date_info", {})
         | source_metadata.get("filemaker", {}).get("date_info", {}),
     }
     return metadata
