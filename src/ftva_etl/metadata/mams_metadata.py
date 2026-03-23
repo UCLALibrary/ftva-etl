@@ -161,27 +161,46 @@ def get_mams_metadata(
     source_metadata = _get_source_metadata(
         digital_data_record, filemaker_record, bib_record, match_asset_uuid
     )
+    # Begin structuring metadata for MAMS output.
+    # For now, always assume we have a Filemaker record.
     metadata = {
-        "alma_bib_id": source_metadata.get("alma", {}).get("alma_bib_id"),
-        "inventory_id": source_metadata.get("filemaker", {}).get("inventory_id"),
-        "uuid": source_metadata.get("uuid"),
-        # All records returned from FM
-        # should have only one inventory number for now,
-        # but MAMS expects an array in JSON, so wrap in a list.
-        # TODO: Parse comma-separated or otherwise delimited inventory numbers
-        # from FM or other sources, if needed.
-        "inventory_numbers": source_metadata.get("filemaker", {}).get(
-            "inventory_numbers", []
-        ),
-        "creators": source_metadata.get("alma", {}).get("creators", []),
-        "language": source_metadata.get("alma", {}).get("language", ""),
-        "file_name": source_metadata.get("filemaker", {}).get("file_name", ""),
-        "asset_type": source_metadata.get("filemaker", {}).get("asset_type", ""),
-        "media_type": source_metadata.get("filemaker", {}).get("media_type", ""),
-        "audio_class": source_metadata.get("filemaker", {}).get("audio_class", ""),
-        "titles": source_metadata.get("alma", {}).get("titles", {})
-        | source_metadata.get("filemaker", {}).get("titles", {}),
-        "date_info": source_metadata.get("alma", {}).get("date_info", {})
-        | source_metadata.get("filemaker", {}).get("date_info", {}),
+        "inventory_id": source_metadata["filemaker"]["inventory_id"],
+        "uuid": source_metadata["uuid"],
+        "inventory_numbers": source_metadata["filemaker"]["inventory_numbers"],
+        "file_name": source_metadata["file_name"],
+        "asset_type": source_metadata["asset_type"],
+        "media_type": source_metadata["media_type"],
+        "audio_class": source_metadata["audio_class"],
+        # Folder and subfolder may be empty strings depending on file type.
+        "folder_name": source_metadata.get("folder_name", ""),
+        "sub_folder_name": source_metadata.get("sub_folder_name", ""),
     }
+    # 1-1-1 match: if we have Alma metadata, it is preferred over FM for certain fields.
+    if source_metadata.get("alma"):
+        metadata["alma_bib_id"] = source_metadata["alma"].get("alma_bib_id", "")
+        metadata["creators"] = source_metadata["alma"].get("creators", [])
+        metadata["language"] = source_metadata["alma"].get("language", "")
+        # Get all fields with "title" in the name from alma metadata (e.g. title, series_title).
+        alma_title_fields = {
+            k: v for k, v in source_metadata["alma"].items() if "title" in k
+        }
+        metadata.update(alma_title_fields)
+        # Get all date fields from alma metadata (e.g. release_broadcast_date, distribution_date).
+        alma_date_info_fields = {
+            k: v for k, v in source_metadata["alma"].items() if "date" in k
+        }
+        metadata.update(alma_date_info_fields)
+    else:
+        metadata["creators"] = source_metadata["filemaker"].get("creators", [])
+        metadata["language"] = source_metadata["filemaker"].get("language", "")
+        # Unpack FM title and date info if Alma metadata is not available.
+        fm_title_fields = {
+            k: v for k, v in source_metadata["filemaker"].items() if "title" in k
+        }
+        metadata.update(fm_title_fields)
+        fm_date_info_fields = {
+            k: v for k, v in source_metadata["filemaker"].items() if "date" in k
+        }
+        metadata.update(fm_date_info_fields)
+
     return metadata
