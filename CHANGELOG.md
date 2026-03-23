@@ -10,6 +10,12 @@
 
 - Fixed logic for obtaining episode title metadata from Filemaker records.
 
+## 0.2.0 - 2026-03-17
+ 
+### Added
+
+- Convenience wrappers around `fmrest.Server.get_records()` and `fmrest.Server.edit_record()` are added on the Filemaker client.
+
 ## 0.1.5 - 2026-03-03
 
 ### Changed
