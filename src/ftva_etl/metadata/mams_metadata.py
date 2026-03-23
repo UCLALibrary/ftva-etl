@@ -171,10 +171,14 @@ def get_mams_metadata(
         "asset_type": source_metadata["asset_type"],
         "media_type": source_metadata["media_type"],
         "audio_class": source_metadata["audio_class"],
-        # Folder and subfolder may be empty strings depending on file type.
-        "folder_name": source_metadata.get("folder_name", ""),
-        "sub_folder_name": source_metadata.get("sub_folder_name", ""),
     }
+    # Folder and subfolder may be empty, depending on file type.
+    # Only include if there is a value.
+    if source_metadata.get("folder_name"):
+        metadata["folder_name"] = source_metadata["folder_name"]
+    if source_metadata.get("sub_folder_name"):
+        metadata["sub_folder_name"] = source_metadata["sub_folder_name"]
+
     # 1-1-1 match: if we have Alma metadata, it is preferred over FM for certain fields.
     if source_metadata.get("alma"):
         metadata["alma_bib_id"] = source_metadata["alma"].get("alma_bib_id", "")
