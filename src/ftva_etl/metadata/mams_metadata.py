@@ -92,7 +92,6 @@ def _get_source_metadata(
 
     :param digital_data_record: A dict containing an FTVA digital data record.
     :param filemaker_record: A fmrest filemaker record.
-        Optional to support multiple types of matching (e.g. DD-FM-Alma or DD-FM only).
     :param bib_record: A pymarc record, expected to contain bibliographic data.
         Optional to support multiple types of matching (e.g. DD-FM-Alma or DD-FM only).
     :param match_asset_uuid: A string representation of an asset's UUID. Defaults to None.
@@ -142,6 +141,24 @@ def _get_source_metadata(
     return metadata
 
 
+def _extract_source_metadata(source_metadata: dict, type: str) -> dict:
+    """Extract the relevant metadata for a given type (e.g. alma, filemaker) from the
+    combined source metadata dict.
+
+    :param source_metadata: A dict containing the combined source metadata.
+    :param type: The type of metadata to extract (e.g. "alma", "filemaker").
+    :return: A dict containing unpacked metadata for the given type.
+    """
+    output = {}
+    output["creators"] = source_metadata[type].get("creators", [])
+    output["language"] = source_metadata[type].get("language", "")
+    # Get all fields with "title" in the name (e.g. title, series_title).
+    output.update({k: v for k, v in source_metadata[type].items() if "title" in k})
+    # Get all date fields (e.g. release_broadcast_date, distribution_date).
+    output.update({k: v for k, v in source_metadata[type].items() if "date" in k})
+    return output
+
+
 def get_mams_metadata(
     digital_data_record: dict,
     filemaker_record: FM_Record,
@@ -152,7 +169,6 @@ def get_mams_metadata(
 
     :param digital_data_record: A dict containing an FTVA digital data record.
     :param filemaker_record: A fmrest filemaker record.
-        Optional to support multiple types of matching (e.g. DD-FM-Alma or DD-FM only).
     :param bib_record: A pymarc record, expected to contain bibliographic data.
         Optional to support multiple types of matching (e.g. DD-FM-Alma or DD-FM only).
     :param match_asset_uuid: A string representation of an asset's UUID. Defaults to None.
@@ -185,29 +201,8 @@ def get_mams_metadata(
     # 1-1-1 match: if we have Alma metadata, it is preferred over FM for certain fields.
     if source_metadata.get("alma"):
         metadata["alma_bib_id"] = source_metadata["alma"].get("alma_bib_id", "")
-        metadata["creators"] = source_metadata["alma"].get("creators", [])
-        metadata["language"] = source_metadata["alma"].get("language", "")
-        # Get all fields with "title" in the name from alma metadata (e.g. title, series_title).
-        alma_title_fields = {
-            k: v for k, v in source_metadata["alma"].items() if "title" in k
-        }
-        metadata.update(alma_title_fields)
-        # Get all date fields from alma metadata (e.g. release_broadcast_date, distribution_date).
-        alma_date_info_fields = {
-            k: v for k, v in source_metadata["alma"].items() if "date" in k
-        }
-        metadata.update(alma_date_info_fields)
+        metadata.update(_extract_source_metadata(source_metadata, "alma"))
     else:
-        metadata["creators"] = source_metadata["filemaker"].get("creators", [])
-        metadata["language"] = source_metadata["filemaker"].get("language", "")
-        # Unpack FM title and date info if Alma metadata is not available.
-        fm_title_fields = {
-            k: v for k, v in source_metadata["filemaker"].items() if "title" in k
-        }
-        metadata.update(fm_title_fields)
-        fm_date_info_fields = {
-            k: v for k, v in source_metadata["filemaker"].items() if "date" in k
-        }
-        metadata.update(fm_date_info_fields)
+        metadata.update(_extract_source_metadata(source_metadata, "filemaker"))
 
     return metadata
