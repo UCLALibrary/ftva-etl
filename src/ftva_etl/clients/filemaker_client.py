@@ -14,7 +14,7 @@ class FilemakerClient:
         password: str,
         url: str = "https://adam.cinema.ucla.edu",
         database: str = "Inventory for Labeling",
-        layout: str = "InventoryForLabeling_ReadOnly_API",
+        layout: str = "InventoryForLabeling_API",
         api_version: str = "vLatest",
         timeout: int = 120,
     ) -> None:
