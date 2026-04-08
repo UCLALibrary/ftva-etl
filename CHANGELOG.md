@@ -1,4 +1,9 @@
 # Changelog
+## 0.3.1 - 2026-04-08
+
+### Changed
+- Updated the default Filemaker layout used by the Filemaker client.
+
 ## 0.3.0 - 2026-03-23
 
 ### Changed
