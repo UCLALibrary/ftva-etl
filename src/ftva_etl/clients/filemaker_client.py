@@ -70,7 +70,9 @@ class FilemakerClient:
 
     def search_by_inventory_number(self, inventory_number: str) -> list[Record]:
 
-        records = self._find(query=[{"inventory_no": f"=={inventory_number}"}])
+        records = self._search_filemaker(
+            index="inventory_no", search_term=inventory_number
+        )
         return records
 
     def get_fields(
@@ -236,7 +238,7 @@ class FilemakerClient:
             # rather than simply returning an empty `Foundset`-- hence the `try` block.
             # Also the date format in `find()` defaults to US format (MM-DD-YYYY);
             # set it to ISO-8601 (YYYY-MM-DD) instead.
-            foundset = self._find(query, date_format="iso-8601")
+            foundset = self._fms.find(query, date_format="iso-8601")
             # Return list to be consistent with empty list returned if no records found.
             return list(foundset)
         except FileMakerError as error:
