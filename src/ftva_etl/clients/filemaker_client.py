@@ -134,6 +134,75 @@ class FilemakerClient:
                 return []  # return empty list if offset is out of bounds
             raise  # re-raise the error if it's something other than 101
 
+    def _find(self, query: list[dict], **kwargs) -> list[Record]:
+        """Convenience wrapper around `_fms.find()`.
+
+        Executes a FileMaker Data API find request using the provided query.
+        The query is a list of dicts, where each dict represents one find
+        request (criterion). Multiple dicts are OR-ed together by FileMaker.
+
+        Field values support FileMaker find operators, e.g.:
+        - Exact match: ``{"inventory_no": "==M1234"}``
+        - Range: ``{"date_modified": "05/01/2026...05/13/2026"}``
+        - Omit: ``{"omit": "true", "inventory_no": "==M1234"}``
+
+        NOTE: The FileMaker Data API returns at most 100 records by default.
+        Use `find_all_records()` instead to retrieve all matching records,
+        or pass `limit` and `offset` via kwargs to paginate manually.
+
+        :param list[dict] query: A list of find-criterion dicts.
+            See the FileMaker Data API documentation for full syntax.
+        :param kwargs: Additional arguments to pass to `_fms.find()`,
+            such as ``sort``, ``limit``, ``offset``, or ``date_format``.
+            See docs for `fmrest.Server.find()` for usage details.
+        :return: A list of matching Filemaker records (may be empty).
+        :raises FileMakerError: If an unknown error occurs while executing the find.
+        """
+        # Use try/except because `find()` raises exception (error 401) when no records match,
+        # rather than returning an empty result.
+        try:
+            fm_find_results = self._fms.find(query, **kwargs)
+            return list(fm_find_results)
+        except FileMakerError as error:
+            # Error 401 represents "No records found".
+            if "error 401" in error.args[0]:
+                return []  # return empty list if no records found
+            raise  # re-raise the error if it's something other than 401
+
+    def find_all_records(
+        self,
+        query: list[dict],
+        page_size: int = 5000,
+        **kwargs,
+    ) -> list[Record]:
+        """Execute a paginated FileMaker find query and return all matching records.
+
+        Calls `_find()` repeatedly with increasing offsets until all matching
+        records have been retrieved. This is necessary because the FileMaker
+        Data API returns at most 100 records per request by default.
+
+        :param list[dict] query: A FileMaker find query (list of criterion dicts).
+            See `_find()` for syntax details.
+        :param int page_size: Number of records to fetch per request. Default: 5000.
+        :param kwargs: Additional arguments to pass to each `_find()` call,
+            such as `sort` or `date_format`.
+        :return: List of all matching Records across all pages.
+        """
+        all_records = []
+        offset = 1
+
+        while True:
+            batch = self._find(query, offset=offset, limit=page_size, **kwargs)
+            if not batch:
+                break
+            all_records.extend(batch)
+            if len(batch) < page_size:
+                # Received a partial page, so this was the last one.
+                break
+            offset += page_size
+
+        return all_records
+
     def edit_record(self, record_id: int, field_data: dict, **kwargs) -> bool:
         """Convenience wrapper around `_fms.edit_record()`.
 
