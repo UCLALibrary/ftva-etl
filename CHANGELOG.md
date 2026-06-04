@@ -1,4 +1,9 @@
 # Changelog
+## 0.3.3 - 2026-06-04
+
+### Fixed
+- Added `click` as an explicit dependency due to a [bug](https://github.com/explosion/spaCy/issues/13971) with `spacy`
+
 ## 0.3.2 - 2026-05-20
 
 ### Added

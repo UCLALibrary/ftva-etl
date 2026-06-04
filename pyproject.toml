@@ -11,7 +11,7 @@ packages = ["src/ftva_etl"]
 
 [project]
 name = "ftva_etl"
-version = "0.3.2"
+version = "0.3.3"
 description = "UCLA FTVA MAMS ETL utilities"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -25,6 +25,8 @@ dependencies = [
     'python-fmrest==1.7.5',
     'requests==2.32.4',
     'spacy==3.8.7',
+    # Add click due to spacy bug: https://github.com/explosion/spaCy/issues/13971
+    'click==8.2.1',
 ]
 
 [project.urls]
