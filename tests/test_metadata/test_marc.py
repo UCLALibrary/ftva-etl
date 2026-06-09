@@ -380,32 +380,40 @@ class TestMarcDatesRegion(TestCase):
         self.assertDictEqual(date_info, expected_result)
 
     def test_date_264_indicator_priority(self):
-        record = self.minimal_bib_record
-        # Add a 264 field with second indicator 2 (highest priority)
-        record.add_field(
-            Field(
-                tag="264",
-                indicators=Indicators(" ", "2"),
-                subfields=[
-                    Subfield(code="c", value="2023"),
-                ],
-            )
-        )
-        # Add a 264 with second indicator 1 (lower priority)
-        record.add_field(
-            Field(
-                tag="264",
-                indicators=Indicators(" ", "1"),
-                subfields=[
-                    Subfield(code="c", value="2022"),
-                ],
-            )
-        )
-        date_info = get_date_info(record)
-        expected_result = {
-            "distribution_date": "2023",
+        # When multiple 264 $c fields are present,
+        # prioritize value of second indicator as follows: 2 > 1 > 4 > 0 > 3.
+        # Test cases are tuples of lists of 2nd indicators to use in each case,
+        # and the expected result from that list.
+        test_cases = [
+            (["2", "1", "4", "0", "3"], {"distribution_date": "2023"}),
+            (["1", "4", "0", "3"], {"release_broadcast_date": "2021"}),
+            (["4", "0", "3"], {"copyright_date": "2019"}),
+            (["0", "3"], {"production_date": "2017"}),
+            (["3"], {"manufacture_date": "2015"}),
+        ]
+        # Used to build the test records for each sub-test.
+        test_values = {
+            "2": "2023",
+            "1": "2021",
+            "4": "2019",
+            "0": "2017",
+            "3": "2015",
         }
-        self.assertDictEqual(date_info, expected_result)
+
+        for indicators, expected in test_cases:
+            with self.subTest(indicators=indicators):
+                record = _get_minimal_bib_record()
+                for indicator in indicators:
+                    record.add_field(
+                        Field(
+                            tag="264",
+                            indicators=Indicators(" ", indicator),
+                            subfields=[
+                                Subfield(code="c", value=test_values[indicator]),
+                            ],
+                        )
+                    )
+                self.assertDictEqual(get_date_info(record), expected)
 
     def test_date_formatting(self):
         record = self.minimal_bib_record
