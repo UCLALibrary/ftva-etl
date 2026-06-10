@@ -1,4 +1,9 @@
 # Changelog
+## 0.3.4 - 2026-06-10
+
+### Changed
+- Updated key from `copyright_release_date` to `copyright_date` for date output in `marc.py` module.
+
 ## 0.3.3 - 2026-06-04
 
 ### Fixed

@@ -55,14 +55,14 @@ def _get_date_from_bib(bib_record: Record) -> dict:
         # Now, check second indicators in order of preference:
         # 2 = distribution date
         # 1 = publication date (write as release_broadcast_date)
-        # 4 = copyright notice date
+        # 4 = copyright notice date (write as copyright_date)
         # 0 = production date
         # 3 = manufacture date
         indicator_priority = ["2", "1", "4", "0", "3"]
         qualifier_map = {
             "2": "distribution_date",
             "1": "release_broadcast_date",
-            "4": "copyright_notice_date",
+            "4": "copyright_date",
             "0": "production_date",
             "3": "manufacture_date",
         }
