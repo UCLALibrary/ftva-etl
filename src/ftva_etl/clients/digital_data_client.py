@@ -39,9 +39,9 @@ class DigitalDataClient:
         url = f"{self._url}/records/"
         params: dict[str, int | str] = {}
         # All params are optional, so set them only if they are provided.
-        if offset:
+        if offset is not None:
             params["offset"] = offset
-        if limit:
+        if limit is not None:
             params["limit"] = limit
         if query:
             params["query"] = query
