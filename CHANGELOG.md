@@ -1,4 +1,9 @@
 # Changelog
+## 0.4.0 - 2026-06-16
+
+### Added
+- New `DigitalDataClient.get_records()` method for paginated retrieval of FTVA Digital Data records, with optional query and field filtering.
+
 ## 0.3.4 - 2026-06-10
 
 ### Changed
