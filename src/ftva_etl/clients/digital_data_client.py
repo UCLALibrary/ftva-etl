@@ -30,8 +30,8 @@ class DigitalDataClient:
     ) -> dict:
         """Get FTVA Digital Data records with optional filtering and pagination.
 
-        :param offset: Starting record for pagination. Defaults are applied by the API.
-        :param limit: Number of results to return. Defaults are applied by the API.
+        :param offset: Starting record for pagination. Default is 0, applied by the API.
+        :param limit: Number of results to return. Default is 100, applied by the API.
         :param query: Optional search/filter string.
         :param fields: Optional list of fields to search in.
         :return: JSON from the response, containing records and total_records.
