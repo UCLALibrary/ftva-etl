@@ -16,7 +16,8 @@ class DigitalDataClient:
         """Get the FTVA Digital Data record matching the input record id.
 
         :param record_id: FTVA Digital Data record id.
-        :return: All of the record's data.
+        :return: Dict containing all of the record's data.
+        :raises HTTPError: If response status code is 400-599.
         """
         url = f"{self._url}/records/{record_id}"
         return self._get_record(url)
@@ -34,7 +35,8 @@ class DigitalDataClient:
         :param limit: Number of results to return. Default is 100, applied by the API.
         :param query: Optional search/filter string.
         :param fields: Optional list of fields to search in.
-        :return: JSON from the response, containing records and total_records.
+        :return: Dict containing `records` list and `total_records` count.
+        :raises HTTPError: If response status code is 400-599.
         """
         url = f"{self._url}/records/"
         params: dict[str, int | str] = {}
@@ -51,13 +53,21 @@ class DigitalDataClient:
 
         response = requests.get(url, auth=(self._user, self._password), params=params)
         response.raise_for_status()
-        return response.json()
+        if response.status_code == 200:
+            return response.json()
+        else:
+            # NOTE: Fallback response format is hard-coded here,
+            # in case the response status is unexpected,
+            # i.e. not 200 and not 400-599.
+            # Will need to update the format if the API changes.
+            return {"records": [], "total_records": 0}
 
     def _get_record(self, url: str) -> dict:
         """General routine for fetching data.
 
         :param url: The fully formed URL for the request.
-        :return: JSON from the response, containing all of the record's data.
+        :return: Dict containing all of the record's data.
+        :raises HTTPError: If response status code is 400-599.
         """
         # Very simple for now, matching the minimal REST API provided by
         # the FTVA Django application it calls.
