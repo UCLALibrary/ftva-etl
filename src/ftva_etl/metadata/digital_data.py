@@ -37,11 +37,14 @@ def get_dcp_info(dd_record: dict) -> dict:
     :param dd_record: A Digital Data record
     :return: A dictionary of fields.
     """
+    if dd_record.get("file_type") != "DCP":
+        return {}
     return {
         # File name must always be empty for DCPs.
         "file_name": "",
         "folder_name": get_folder_name(dd_record),
         "sub_folder_name": get_sub_folder_name(dd_record),
+        "file_type": "DCP",  # file type required by MAMS for DCP files
     }
 
 
@@ -51,11 +54,13 @@ def get_dpx_info(dd_record: dict) -> dict:
     :param dd_record: A Digital Data record
     :return: A dictionary of fields.
     """
+    if dd_record.get("file_type") != "DPX":
+        return {}
     return {
         # File name must always be empty for DPXs.
         "file_name": "",
         "folder_name": get_folder_name(dd_record),
-        "file_type": "DPX",  # Required by MAMS only for DPX files. Hard-coded here.
+        "file_type": "DPX",  # file type required by MAMS for DPX files
     }
 
 
