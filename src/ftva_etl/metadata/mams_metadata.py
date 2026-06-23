@@ -13,6 +13,7 @@ from .digital_data import (
     get_media_type,
     get_uuid,
     get_audio_class,
+    get_record_type_and_match_asset,
 )
 from .filemaker import (
     get_inventory_id,
@@ -81,30 +82,47 @@ def get_filemaker_metadata(filemaker_record: FM_Record, is_series: bool) -> dict
     }
 
 
-def _get_source_metadata(
+def _extract_descriptive_metadata(source_metadata: dict) -> dict:
+    """Utility for extracting descriptive metadata fields from the provided source,
+    i.e. `creators`, `language`, and all title and date fields.
+    Since these fields are common to both Alma and Filemaker sources,
+    and Alma is preferred as a source when present, but is not required,
+    this function is a reusable utility for extracting these fields from either source.
+
+    :param source_metadata: A dict containing source metadata (i.e. either from Filemaker or Alma).
+    :return: A dict containing descriptive metadata fields from the source metadata.
+    """
+    output = {
+        "creators": source_metadata.get("creators", []),
+        "language": source_metadata.get("language", ""),
+        **{k: v for k, v in source_metadata.items() if "title" in k},
+        **{k: v for k, v in source_metadata.items() if "date" in k},
+    }
+    return output
+
+
+def get_mams_metadata(
     digital_data_record: dict,
     filemaker_record: FM_Record,
     bib_record: Optional[Pymarc_Record] = None,
-    match_asset_uuid: Optional[str] = None,
+    nlp_model: Optional[Language] = None,
 ) -> dict:
-    """Retrieve and combine metadata from the source records into a single dict, for
-    further processing and eventual output to the MAMS.
+    """Format the source metadata for output to the MAMS.
 
     :param digital_data_record: A dict containing an FTVA digital data record.
     :param filemaker_record: A fmrest filemaker record.
     :param bib_record: A pymarc record, expected to contain bibliographic data.
         Optional to support multiple types of matching (e.g. DD-FM-Alma or DD-FM only).
-    :param match_asset_uuid: A string representation of an asset's UUID. Defaults to None.
-    :return asset: A dict of metadata combined from the input records.
+    :param nlp_model: A spacy language model to use for NER.
+        If not provided, the default spacy model (en_core_web_md) will be used.
+    :return: A dict containing the metadata formatted for output to the MAMS.
     """
+    # Allow caller to provide the spacy model, to avoid loading it on every call
+    if not nlp_model:
+        nlp_model = spacy.load("en_core_web_md")
 
-    # Load spacy model for NER
-    # TODO: Support use of a custom model, if needed?
-    # Not sure yet where this should be loaded, or what performance impact
-    # may be for batch processing.
-    nlp_model = spacy.load("en_core_web_md")
-
-    # Determine if the record is a series, as determined by the Filemaker record.
+    # Used by both Filemaker and Alma metadata functions for determining how to format title info.
+    # Filemaker is the source-of-truth for whether something is a series.
     is_series = is_series_production_type(filemaker_record)
 
     filemaker_metadata = get_filemaker_metadata(filemaker_record, is_series)
@@ -113,96 +131,37 @@ def _get_source_metadata(
         get_alma_metadata(bib_record, nlp_model, is_series) if bib_record else {}
     )
 
-    # Get the rest of the data and prepare it for return.
-    metadata = {
-        "alma": alma_metadata,
-        "filemaker": filemaker_metadata,
+    # These are all the fields derived from the Digital Data app
+    digital_data_fields = {
         "uuid": get_uuid(digital_data_record),
         "file_name": get_file_name(digital_data_record),
         "asset_type": get_asset_type(digital_data_record),
         "media_type": get_media_type(digital_data_record),
         "audio_class": get_audio_class(digital_data_record),
+        **get_record_type_and_match_asset(digital_data_record),
+        **get_dcp_info(digital_data_record),  # returns DCP fields if file type is DCP
+        **get_dpx_info(digital_data_record),  # returns DPX fields if file type is DPX
     }
 
-    # If a match_asset_uuid is provided for a track, add it to the metadata record.
-    if match_asset_uuid:
-        metadata["match_asset"] = match_asset_uuid
+    # These are the fields from Filemaker
+    filemaker_fields = {
+        "inventory_id": filemaker_metadata.get("inventory_id", ""),
+        "inventory_numbers": filemaker_metadata.get("inventory_numbers", []),
+        **_extract_descriptive_metadata(filemaker_metadata),
+    }
 
-    # Override some elements based on file type.
-    file_type = digital_data_record.get("file_type", "")
-    if file_type == "DCP":
-        metadata.update(get_dcp_info(digital_data_record))
-    elif file_type == "DPX":
-        metadata.update(get_dpx_info(digital_data_record))
-    else:
-        # No special action needed
-        pass
-
-    return metadata
-
-
-def _extract_source_metadata(source_metadata: dict, type: str) -> dict:
-    """Extract the relevant metadata for a given type (e.g. alma, filemaker) from the
-    combined source metadata dict.
-
-    :param source_metadata: A dict containing the combined source metadata.
-    :param type: The type of metadata to extract (e.g. "alma", "filemaker").
-    :return: A dict containing unpacked metadata for the given type.
-    """
-    output = {}
-    output["creators"] = source_metadata[type].get("creators", [])
-    output["language"] = source_metadata[type].get("language", "")
-    # Get all fields with "title" in the name (e.g. title, series_title).
-    output.update({k: v for k, v in source_metadata[type].items() if "title" in k})
-    # Get all date fields (e.g. release_broadcast_date, distribution_date).
-    output.update({k: v for k, v in source_metadata[type].items() if "date" in k})
-    return output
-
-
-def get_mams_metadata(
-    digital_data_record: dict,
-    filemaker_record: FM_Record,
-    bib_record: Optional[Pymarc_Record] = None,
-    match_asset_uuid: Optional[str] = None,
-) -> dict:
-    """Format the source metadata for output to the MAMS.
-
-    :param digital_data_record: A dict containing an FTVA digital data record.
-    :param filemaker_record: A fmrest filemaker record.
-    :param bib_record: A pymarc record, expected to contain bibliographic data.
-        Optional to support multiple types of matching (e.g. DD-FM-Alma or DD-FM only).
-    :param match_asset_uuid: A string representation of an asset's UUID. Defaults to None.
-    :return: A dict containing the metadata formatted for output to the MAMS.
-    """
-    source_metadata = _get_source_metadata(
-        digital_data_record, filemaker_record, bib_record, match_asset_uuid
-    )
-    # Begin structuring metadata for MAMS output.
-    # For now, always assume we have a Filemaker record.
+    # Combine fields from Digital Data and Filemaker into a single metadata object...
     metadata = {
-        "inventory_id": source_metadata["filemaker"]["inventory_id"],
-        "uuid": source_metadata["uuid"],
-        "inventory_numbers": source_metadata["filemaker"]["inventory_numbers"],
-        "file_name": source_metadata["file_name"],
-        "asset_type": source_metadata["asset_type"],
-        "media_type": source_metadata["media_type"],
-        "audio_class": source_metadata["audio_class"],
+        **digital_data_fields,
+        **filemaker_fields,
     }
-    # Folder and subfolder may be empty, depending on file type.
-    # Match Asset may also be empty depending on asset/track relationships and matching results.
-    # Only include if there is a value.
-    if source_metadata.get("folder_name"):
-        metadata["folder_name"] = source_metadata["folder_name"]
-    if source_metadata.get("sub_folder_name"):
-        metadata["sub_folder_name"] = source_metadata["sub_folder_name"]
-    if source_metadata.get("match_asset"):
-        metadata["match_asset"] = source_metadata["match_asset"]
 
-    # 1-1-1 match: if we have Alma metadata, it is preferred over FM for certain fields.
-    if source_metadata.get("alma"):
-        metadata["alma_bib_id"] = source_metadata["alma"].get("alma_bib_id", "")
-        metadata.update(_extract_source_metadata(source_metadata, "alma"))
-    else:
-        metadata.update(_extract_source_metadata(source_metadata, "filemaker"))
+    # ...and if Alma metadata is available, update the metadata dict with Alma fields
+    if alma_metadata:
+        alma_fields = {
+            "alma_bib_id": alma_metadata.get("alma_bib_id", ""),
+            **_extract_descriptive_metadata(alma_metadata),
+        }
+        metadata.update(alma_fields)
 
     return metadata
