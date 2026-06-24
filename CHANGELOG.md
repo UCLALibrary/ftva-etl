@@ -1,4 +1,9 @@
 # Changelog
+## 0.5.0 - 2026-06-24
+
+### Changed
+- Refactored `mams_metadata.py` for clarity and to integrate metadata-formatting logic previously handled in external script.
+
 ## 0.4.0 - 2026-06-16
 
 ### Added
