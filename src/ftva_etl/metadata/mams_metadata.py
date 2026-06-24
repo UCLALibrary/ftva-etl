@@ -82,7 +82,7 @@ def get_filemaker_metadata(filemaker_record: FM_Record, is_series: bool) -> dict
     }
 
 
-def _extract_descriptive_metadata(source_metadata: dict) -> dict:
+def _get_descriptive_metadata(source_metadata: dict) -> dict:
     """Utility for extracting descriptive metadata fields from the provided source,
     i.e. `creators`, `language`, and all title and date fields.
     Since these fields are common to both Alma and Filemaker sources,
@@ -147,7 +147,7 @@ def get_mams_metadata(
     filemaker_fields = {
         "inventory_id": filemaker_metadata.get("inventory_id", ""),
         "inventory_numbers": filemaker_metadata.get("inventory_numbers", []),
-        **_extract_descriptive_metadata(filemaker_metadata),
+        **_get_descriptive_metadata(filemaker_metadata),
     }
 
     # Combine fields from Digital Data and Filemaker into a single metadata object...
@@ -160,7 +160,7 @@ def get_mams_metadata(
     if alma_metadata:
         alma_fields = {
             "alma_bib_id": alma_metadata.get("alma_bib_id", ""),
-            **_extract_descriptive_metadata(alma_metadata),
+            **_get_descriptive_metadata(alma_metadata),
         }
         metadata.update(alma_fields)
 

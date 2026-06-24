@@ -37,7 +37,7 @@ def get_dcp_info(dd_record: dict) -> dict:
     :param dd_record: A Digital Data record
     :return: A dictionary of fields.
     """
-    if dd_record.get("file_type") != "DCP":
+    if dd_record.get("file_type", "") != "DCP":
         return {}
     return {
         # File name must always be empty for DCPs.
@@ -54,7 +54,7 @@ def get_dpx_info(dd_record: dict) -> dict:
     :param dd_record: A Digital Data record
     :return: A dictionary of fields.
     """
-    if dd_record.get("file_type") != "DPX":
+    if dd_record.get("file_type", "") != "DPX":
         return {}
     return {
         # File name must always be empty for DPXs.

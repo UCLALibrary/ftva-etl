@@ -74,7 +74,7 @@ class TestDigitalData(TestCase):
                 ],
             },  # Record 3: wrong relationship type indicated in DD record targeting asset 12345
             {
-                "uuid": "12345",
+                "uuid": "98765",
                 "inventory_numbers": ["INV004"],
                 "incoming_relationships": [
                     {
