@@ -23,10 +23,15 @@ def _is_imprecise_date(date_string: str) -> bool:
         "%B %Y",  # Month name, space, and year, e.g. "October 1996"
         "%b %Y",  # Month abbreviation, space, and year, e.g. "Oct 1996"
     )
-    # Special check for 4-digit year with possible hyphen indicating an uncertain year,
-    # needed because `%Y` would not handle hyphens
+    # Special check for 4-digit year with possible hyphen indicating an uncertain year.
+    # Year only could be checked with `%Y` above, but it would not handle hyphens.
+    # The check below returns True if:
+    # 1. date_string is just a year (i.e. 4 digits); or
+    # 2. date_string has a length of 4, and has hyphens to indicate an uncertain year,
+    #    e.g. "202-" or "19--".
     if len(date_string) == 4 and (date_string.isdigit() or "-" in date_string):
         return True
+
     for format in imprecise_date_formats:
         try:
             # `strptime` will raise a ValueError
