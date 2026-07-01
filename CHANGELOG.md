@@ -1,4 +1,9 @@
 # Changelog
+## 0.5.1 - 2026-06-30
+
+### Changed
+- Fixed bug related to parsing of dates from MARC records with only year and month
+
 ## 0.5.0 - 2026-06-24
 
 ### Changed

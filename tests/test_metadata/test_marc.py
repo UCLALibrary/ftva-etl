@@ -485,6 +485,34 @@ class TestMarcDatesRegion(TestCase):
         }
         self.assertDictEqual(date_info, expected_result)
 
+    def test_date_only_month_and_year(self):
+        """Test that dates with only month and year in various formats are parsed correctly."""
+
+        # Values with only month and year should remain unchanged
+        test_cases = [
+            "October 1996",  # Month name and year
+            "Oct 1996",  # Month abbreviation and year
+            "1996-10",  # Numeric year-month
+            "[October 1996]",  # Month name and year in brackets
+            "[Oct. 1996]",  # Month abbr, period, and year in brackets
+            "March, 1955",  # Month name, comma, and year
+            "MAR 1955",  # Capitalized month abbreviation and year
+        ]
+
+        for test_case in test_cases:
+            with self.subTest(test_case=test_case):
+                record = _get_minimal_bib_record()
+                record.add_field(
+                    Field(
+                        tag="260",
+                        indicators=Indicators(" ", " "),
+                        subfields=[Subfield(code="c", value=test_case)],
+                    )
+                )
+                date_info = get_date_info(record)
+                # Should be parsed as `release_broadcast_date` with value unchanged
+                self.assertDictEqual(date_info, {"release_broadcast_date": test_case})
+
 
 class TestMarcCreatorsRegion(TestCase):
     """Test the creators region of the MARC metadata module.

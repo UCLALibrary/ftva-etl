@@ -2,7 +2,48 @@ import sys
 import dateutil.parser
 import string
 import logging
+from datetime import datetime
 from typing import Optional
+
+# Create a module logger, which will be a child of the package logger
+logger = logging.getLogger(__name__)
+
+
+def _is_imprecise_date(date_string: str) -> bool:
+    """Return True if date_string lacks full year-month-day precision.
+
+    :param date_string: The date string to check.
+    :return: True if the date string is imprecise, False otherwise.
+    """
+    # These are date format strings that indicate an imprecise date
+    imprecise_date_formats = (
+        "%Y-%m",  # Year-month, e.g. "1996-10"
+        "%B, %Y",  # Month name, comma, and year, e.g. "October, 1996"
+        "%b. %Y",  # Month abbreviation, period, and year, e.g. "Oct. 1996"
+        "%B %Y",  # Month name, space, and year, e.g. "October 1996"
+        "%b %Y",  # Month abbreviation, space, and year, e.g. "Oct 1996"
+    )
+    # Special check for 4-digit year with possible hyphen indicating an uncertain year.
+    # Year only could be checked with `%Y` above, but it would not handle hyphens.
+    # The check below returns True if:
+    # 1. date_string is just a year (i.e. 4 digits); or
+    # 2. date_string has a length of 4, and has hyphens to indicate an uncertain year,
+    #    e.g. "202-" or "19--".
+    if len(date_string) == 4 and (date_string.isdigit() or "-" in date_string):
+        return True
+
+    for format in imprecise_date_formats:
+        try:
+            # `strptime` will raise a ValueError
+            # if the date string does not fully match the format.
+            # Using it here as a pattern-matcher, not a parser.
+            datetime.strptime(date_string, format)
+            # If we get here, the date string matches one of the formats,
+            # so it is imprecise and we return True.
+            return True
+        except ValueError:
+            continue
+    return False
 
 
 def parse_date(date_string: str) -> str:
@@ -21,26 +62,19 @@ def parse_date(date_string: str) -> str:
     date_string = date_string.rstrip(".,;:!?")
     date_string = date_string.strip()
 
-    # Keep date_string as is if it matches one of the following conditions:
-    # 1. date_string is just a year (i.e. 4 digits); or
-    # 2. date_string has a length of 4, and has hyphens to indicate an uncertain year
-    if len(date_string) == 4 and (date_string.isdigit() or "-" in date_string):
+    # If the date string is imprecise (i.e. not year-month-day precision), keep it as-is
+    if _is_imprecise_date(date_string):
         formatted_date = date_string
-        if in_brackets:
-            formatted_date = f"[{formatted_date}]"
-        return formatted_date
-
-    # Try to parse the date string using dateutil.parser
-    # TODO: Handle dates with only month and year?
-    try:
-        parsed_date = dateutil.parser.parse(date_string)
-        # Format the date as YYYY-MM-DD
-        formatted_date = parsed_date.strftime("%Y-%m-%d")
-    except (ValueError, dateutil.parser.ParserError):  # TODO: as e:
-        # If parsing fails, log the error and return the original string
-        # TODO: LOGGING
-        # logging.info(f"Failed to parse date '{date_string}': {e}")
-        formatted_date = date_string
+    # Otherwise, try to parse the date string, handling any unexpected errors.
+    else:
+        try:
+            parsed_date = dateutil.parser.parse(date_string)
+            # Format the date as YYYY-MM-DD
+            formatted_date = parsed_date.strftime("%Y-%m-%d")
+        except (ValueError, dateutil.parser.ParserError) as e:
+            # If parsing fails, log the error and return the original string.
+            logger.warning(f"Failed to parse date '{date_string}': {e}")
+            formatted_date = date_string
 
     if in_brackets:
         formatted_date = f"[{formatted_date}]"
