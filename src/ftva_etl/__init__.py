@@ -17,3 +17,4 @@ from .clients.digital_data_client import DigitalDataClient  # noqa
 
 # Metadata generator
 from .metadata.mams_metadata import get_mams_metadata  # noqa
+from .metadata.mams_metadata_ndm import get_mams_metadata_ndm  # noqa
