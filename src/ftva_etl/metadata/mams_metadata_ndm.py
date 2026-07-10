@@ -1,5 +1,4 @@
 import spacy
-import logging
 
 from fmrest.record import Record as FM_Record
 from pymarc import Record as Pymarc_Record
@@ -30,72 +29,6 @@ from .marc import (
 )
 
 
-# Create a module logger, which will be a child of the package logger
-logger = logging.getLogger(__name__)
-
-
-def get_alma_metadata(
-    bib_record: Pymarc_Record, nlp_model: Language, is_series: bool = False
-) -> dict:
-    """Get the Alma metadata from a pymarc record.
-
-    :param bib_record: A pymarc record.
-    :param nlp_model: A spacy language model to use for NER.
-    :param is_series: Whether the record is a series, derived from Filemaker record.
-        Defaults to False.
-    :return: A dict containing the Alma metadata needed for the MAMS.
-    """
-    return {
-        "alma_bib_id": get_bib_id(bib_record),
-        "language": get_alma_language_name(bib_record),
-        "creators": get_alma_creators(bib_record, nlp_model),
-        **get_alma_title_info(bib_record, is_series),
-        **get_alma_date_info(bib_record),
-    }
-
-
-def get_filemaker_metadata_from_inventory_record(
-    fm_inventory_record: FM_Record, is_series: bool
-) -> dict:
-    """Get Filemaker metadata from the provided inventory record.
-
-    :param fm_inventory_record: A Filemaker record containing inventory data.
-    :param is_series: Whether the record is a series.
-    :return: A dict containing the Filemaker metadata needed for the MAMS.
-    """
-    return {
-        "inventory_id": get_inventory_id(fm_inventory_record),
-        # All records returned from FM
-        # should have only one inventory number for now,
-        # but MAMS expects an array in JSON, so wrap in a list.
-        # TODO: Parse comma-separated or otherwise delimited inventory numbers
-        # from FM or other sources, if needed.
-        "inventory_numbers": [get_inventory_number(fm_inventory_record)],
-        "source_id": get_source_id(fm_inventory_record),
-        "creators": get_fm_creators(fm_inventory_record),
-        "language": get_fm_language_name(fm_inventory_record),
-        "asset_type": get_asset_type(fm_inventory_record),
-        "media_type": get_media_type(fm_inventory_record),
-        **get_fm_title_info(fm_inventory_record, is_series),
-        **get_fm_date_info(fm_inventory_record),
-    }
-
-
-def get_filemaker_metadata_from_item_record(fm_item_record: FM_Record) -> dict:
-    """Get Filemaker metadata from the provided item record.
-
-    :param fm_item_record: A Filemaker record containing item data.
-    :param is_series: Whether the record is a series.
-    :return: A dict containing the Filemaker metadata needed for the MAMS.
-    """
-    return {
-        "uuid": get_uuid(fm_item_record),
-        "creation_date": get_creation_date(fm_item_record),
-        "audio_class": get_audio_class(fm_item_record),
-        **get_file_path_info(fm_item_record),
-    }
-
-
 def get_mams_metadata_ndm(
     fm_item_record: FM_Record,
     fm_inventory_record: FM_Record,
@@ -122,15 +55,36 @@ def get_mams_metadata_ndm(
     # Filemaker is the source-of-truth for whether something is a series.
     is_series = is_series_production_type(fm_inventory_record)
 
-    fm_metadata_from_item_record = get_filemaker_metadata_from_item_record(
-        fm_item_record
-    )
-    fm_metadata_from_inventory_record = get_filemaker_metadata_from_inventory_record(
-        fm_inventory_record, is_series
-    )
+    # These fields are derived from `fm_inventory_record`...
+    fm_inventory_record_metadata = {
+        "inventory_id": get_inventory_id(fm_inventory_record),
+        # MAMS expects list for `inventory_numbers` field
+        "inventory_numbers": [get_inventory_number(fm_inventory_record)],
+        "source_id": get_source_id(fm_inventory_record),
+        "creators": get_fm_creators(fm_inventory_record),
+        "language": get_fm_language_name(fm_inventory_record),
+        "asset_type": get_asset_type(fm_inventory_record),
+        "media_type": get_media_type(fm_inventory_record),
+        **get_fm_title_info(fm_inventory_record, is_series),
+        **get_fm_date_info(fm_inventory_record),
+    }
+
+    # ...and these fields are derived from `fm_item_record`
+    fm_item_record_metadata = {
+        "uuid": get_uuid(fm_item_record),
+        "creation_date": get_creation_date(fm_item_record),
+        "audio_class": get_audio_class(fm_item_record),
+        **get_file_path_info(fm_item_record),
+    }
 
     alma_metadata = (
-        get_alma_metadata(alma_bib_record, nlp_model, is_series)
+        {
+            "alma_bib_id": get_bib_id(alma_bib_record),
+            "language": get_alma_language_name(alma_bib_record),
+            "creators": get_alma_creators(alma_bib_record, nlp_model),
+            **get_alma_title_info(alma_bib_record, is_series),
+            **get_alma_date_info(alma_bib_record),
+        }
         if alma_bib_record
         else {}
     )
@@ -138,8 +92,8 @@ def get_mams_metadata_ndm(
     # Unpack fields from Filemaker into a single metadata object...
     metadata = {
         "record_type": "asset",  # default to asset record type
-        **fm_metadata_from_item_record,
-        **fm_metadata_from_inventory_record,
+        **fm_item_record_metadata,
+        **fm_inventory_record_metadata,
     }
 
     # ...and if Alma metadata is available, update the metadata dict with Alma fields
