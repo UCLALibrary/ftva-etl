@@ -1,7 +1,7 @@
 import logging
 
 from fmrest.record import Record
-from pathlib import PurePath
+from pathlib import PureWindowsPath, PurePosixPath
 from .utils import cleanup_production_type
 
 
@@ -226,7 +226,14 @@ def get_file_path_info(fm_record: Record) -> dict:
     """
     raw_value = fm_record.file_path
     try:
-        file_path = PurePath(raw_value)
+        # If raw value contains "\\", treat it as a Windows path,
+        # otherwise treat it as a POSIX path
+        file_path = (
+            PureWindowsPath(raw_value)
+            if "\\" in raw_value
+            else PurePosixPath(raw_value)
+        )
+
     except ValueError:
         logger.warning(
             f"Filemaker record with record ID {fm_record.recordId} "
@@ -234,20 +241,18 @@ def get_file_path_info(fm_record: Record) -> dict:
         )
         return {}
 
-    if fm_record.specific_carrier_type == "DCP":
+    if fm_record.specific_carrier_type.lower() == "dcp":
         return {
             "file_name": "",  # always empty for DCP
-            "folder_name": file_path.parent.parent,
-            "sub_folder_name": file_path.parent,
+            "folder_name": file_path.parents[1].name,  # two levels up
+            "sub_folder_name": file_path.parents[0].name,  # one level up
             "file_type": "DCP",
         }
-    elif fm_record.specific_carrier_type == "DPX":
+    elif fm_record.specific_carrier_type.lower() == "dpx":
         return {
             "file_name": "",  # always empty for DPX
-            "folder_name": file_path.parent,
+            "folder_name": file_path.parents[0].name,  # one level up
             "file_type": "DPX",
         }
-    else:
-        return {
-            "file_name": file_path.name,
-        }
+    # If not a DCP or DPX, return just file name
+    return {"file_name": file_path.name}
