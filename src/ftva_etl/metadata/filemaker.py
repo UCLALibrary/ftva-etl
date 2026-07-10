@@ -1,6 +1,8 @@
-from fmrest.record import Record
-from .utils import cleanup_production_type
 import logging
+
+from fmrest.record import Record
+from pathlib import PurePath
+from .utils import cleanup_production_type
 
 
 # Code which extracts data from a Filemaker record.
@@ -159,3 +161,93 @@ def get_title_info(fm_record: Record, is_series: bool) -> dict:
         }
     else:
         return {"title": fm_title}
+
+
+def get_source_id(fm_record: Record) -> str:
+    """Get the source identifier from a Filemaker record.
+
+    :param fm_record: A Filemaker record.
+    :return: The source identifier as a string.
+    """
+    return fm_record.source_identifier
+
+
+def get_uuid(fm_record: Record) -> str:
+    """Get the UUID from a Filemaker record.
+
+    :param fm_record: A Filemaker record.
+    :return: The UUID as a string.
+    """
+    return fm_record["UUID"]  # field name is capitalized in FM
+
+
+def get_creation_date(fm_record: Record) -> str:
+    """Get the creation date from a Filemaker record.
+
+    :param fm_record: A Filemaker record.
+    :return: The creation date as a string.
+    """
+    return fm_record["Creation_date"]  # note capitalization in field name
+
+
+def get_asset_type(fm_record: Record) -> str:
+    """Get the asset type from a Filemaker record.
+
+    :param fm_record: A Filemaker record.
+    :return: The asset type as a string.
+    """
+    return fm_record.asset_type
+
+
+def get_media_type(fm_record: Record) -> str:
+    """Get the media type from a Filemaker record.
+
+    :param fm_record: A Filemaker record.
+    :return: The media type as a string.
+    """
+    return fm_record.media_type
+
+
+def get_audio_class(fm_record: Record) -> str:
+    """Get the audio class from a Filemaker record.
+
+    :param fm_record: A Filemaker record.
+    :return: The audio class as a string.
+    """
+    # Specs say to return "Unknown" if this field is an empty string
+    return fm_record.audio_class if fm_record.audio_class.strip() != "" else "Unknown"
+
+
+def get_file_path_info(fm_record: Record) -> dict:
+    """Get the file path info from a Filemaker record.
+
+    :param fm_record: A Filemaker record.
+    :return: A dict containing the file path info.
+    """
+    raw_value = fm_record.file_path
+    try:
+        file_path = PurePath(raw_value)
+    except ValueError:
+        logger.warning(
+            f"Filemaker record with record ID {fm_record.recordId} "
+            f"has an invalid `file_path` value: {raw_value}"
+        )
+        return {}
+
+    if fm_record.specific_carrier_type == "DCP":
+        return {
+            "file_name": "",  # always empty for DCP
+            "folder_name": file_path.parent.parent,
+            "sub_folder_name": file_path.parent,
+            "file_type": "DCP",
+        }
+    elif fm_record.specific_carrier_type == "DPX":
+        return {
+            "file_name": "",  # always empty for DPX
+            "folder_name": file_path.parent,
+            "file_type": "DPX",
+        }
+    else:
+        return {
+            "file_name": file_path.name,
+        }

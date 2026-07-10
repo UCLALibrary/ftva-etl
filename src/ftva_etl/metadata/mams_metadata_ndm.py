@@ -8,11 +8,18 @@ from spacy.language import Language
 from .filemaker import (
     get_inventory_id,
     get_inventory_number,
+    get_source_id,
     is_series_production_type,
     get_creators as get_fm_creators,
     get_date_info as get_fm_date_info,
     get_language_name as get_fm_language_name,
     get_title_info as get_fm_title_info,
+    get_uuid,
+    get_creation_date,
+    get_asset_type,
+    get_media_type,
+    get_audio_class,
+    get_file_path_info,
 )
 from .marc import (
     get_bib_id,
@@ -38,57 +45,55 @@ def get_alma_metadata(
         Defaults to False.
     :return: A dict containing the Alma metadata needed for the MAMS.
     """
-    # This gets a collection of titles which will be unpacked later.
-    titles = get_alma_title_info(bib_record, is_series)
     return {
         "alma_bib_id": get_bib_id(bib_record),
         "language": get_alma_language_name(bib_record),
         "creators": get_alma_creators(bib_record, nlp_model),
-        **titles,
+        **get_alma_title_info(bib_record, is_series),
         **get_alma_date_info(bib_record),
     }
 
 
-def get_filemaker_metadata(filemaker_record: FM_Record, is_series: bool) -> dict:
-    """Get the Filemaker metadata from a Filemaker record.
+def get_filemaker_metadata_from_inventory_record(
+    fm_inventory_record: FM_Record, is_series: bool
+) -> dict:
+    """Get Filemaker metadata from the provided inventory record.
 
-    :param filemaker_record: A Filemaker record.
-    :param is_series: Whether the record is a series, derived from Filemaker record.
+    :param fm_inventory_record: A Filemaker record containing inventory data.
+    :param is_series: Whether the record is a series.
     :return: A dict containing the Filemaker metadata needed for the MAMS.
     """
-    titles = get_fm_title_info(filemaker_record, is_series)
     return {
-        "inventory_id": get_inventory_id(filemaker_record),
+        "inventory_id": get_inventory_id(fm_inventory_record),
         # All records returned from FM
         # should have only one inventory number for now,
         # but MAMS expects an array in JSON, so wrap in a list.
         # TODO: Parse comma-separated or otherwise delimited inventory numbers
         # from FM or other sources, if needed.
-        "inventory_numbers": [get_inventory_number(filemaker_record)],
-        "creators": get_fm_creators(filemaker_record),
-        "language": get_fm_language_name(filemaker_record),
-        **titles,
-        **get_fm_date_info(filemaker_record),
+        "inventory_numbers": [get_inventory_number(fm_inventory_record)],
+        "source_id": get_source_id(fm_inventory_record),
+        "creators": get_fm_creators(fm_inventory_record),
+        "language": get_fm_language_name(fm_inventory_record),
+        "asset_type": get_asset_type(fm_inventory_record),
+        "media_type": get_media_type(fm_inventory_record),
+        **get_fm_title_info(fm_inventory_record, is_series),
+        **get_fm_date_info(fm_inventory_record),
     }
 
 
-def _get_descriptive_metadata(source_metadata: dict) -> dict:
-    """Utility for extracting descriptive metadata fields from the provided source,
-    i.e. `creators`, `language`, and all title and date fields.
-    Since these fields are common to both Alma and Filemaker sources,
-    and Alma is preferred as a source when present, but is not required,
-    this function is a reusable utility for extracting these fields from either source.
+def get_filemaker_metadata_from_item_record(fm_item_record: FM_Record) -> dict:
+    """Get Filemaker metadata from the provided item record.
 
-    :param source_metadata: A dict containing source metadata (i.e. either from Filemaker or Alma).
-    :return: A dict containing descriptive metadata fields from the source metadata.
+    :param fm_item_record: A Filemaker record containing item data.
+    :param is_series: Whether the record is a series.
+    :return: A dict containing the Filemaker metadata needed for the MAMS.
     """
-    output = {
-        "creators": source_metadata.get("creators", []),
-        "language": source_metadata.get("language", ""),
-        **{k: v for k, v in source_metadata.items() if "title" in k},
-        **{k: v for k, v in source_metadata.items() if "date" in k},
+    return {
+        "uuid": get_uuid(fm_item_record),
+        "creation_date": get_creation_date(fm_item_record),
+        "audio_class": get_audio_class(fm_item_record),
+        **get_file_path_info(fm_item_record),
     }
-    return output
 
 
 def get_mams_metadata_ndm(
@@ -117,7 +122,12 @@ def get_mams_metadata_ndm(
     # Filemaker is the source-of-truth for whether something is a series.
     is_series = is_series_production_type(fm_inventory_record)
 
-    filemaker_metadata = get_filemaker_metadata(fm_inventory_record, is_series)
+    fm_metadata_from_item_record = get_filemaker_metadata_from_item_record(
+        fm_item_record
+    )
+    fm_metadata_from_inventory_record = get_filemaker_metadata_from_inventory_record(
+        fm_inventory_record, is_series
+    )
 
     alma_metadata = (
         get_alma_metadata(alma_bib_record, nlp_model, is_series)
@@ -125,24 +135,21 @@ def get_mams_metadata_ndm(
         else {}
     )
 
-    # These are the fields from Filemaker
-    filemaker_fields = {
-        "inventory_id": filemaker_metadata.get("inventory_id", ""),
-        "inventory_numbers": filemaker_metadata.get("inventory_numbers", []),
-        **_get_descriptive_metadata(filemaker_metadata),
-    }
-
     # Unpack fields from Filemaker into a single metadata object...
     metadata = {
-        **filemaker_fields,
+        "record_type": "asset",  # default to asset record type
+        **fm_metadata_from_item_record,
+        **fm_metadata_from_inventory_record,
     }
 
     # ...and if Alma metadata is available, update the metadata dict with Alma fields
     if alma_metadata:
-        alma_fields = {
-            "alma_bib_id": alma_metadata.get("alma_bib_id", ""),
-            **_get_descriptive_metadata(alma_metadata),
-        }
-        metadata.update(alma_fields)
+        metadata.update(alma_metadata)
+
+    # ...finally add match asset information, if provided
+    if match_asset:
+        # Update record type to track if match asset is provided
+        metadata["record_type"] = "track"
+        metadata["match_asset"] = match_asset
 
     return metadata
