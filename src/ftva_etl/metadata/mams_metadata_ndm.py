@@ -106,4 +106,5 @@ def get_mams_metadata_ndm(
         metadata["record_type"] = "track"
         metadata["match_asset"] = match_asset
 
-    return metadata
+    # Sort the output dict by its keys, just to make review easier
+    return dict(sorted(metadata.items()))
