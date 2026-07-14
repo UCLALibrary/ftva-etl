@@ -2,7 +2,7 @@ import logging
 
 from fmrest.record import Record
 from pathlib import PureWindowsPath, PurePosixPath
-from .utils import cleanup_production_type
+from .utils import cleanup_production_type, parse_date
 
 
 # Code which extracts data from a Filemaker record.
@@ -74,14 +74,14 @@ def get_date_info(fm_record: Record) -> dict:
     # If FM data has `release_broadcast_year`, map it to `release_broadcast_date`.
     # Else, if FM data has `record_date`, map it to `production_date`.
     # Else, return an empty dict.
-    # NOTE: we're taking values as-is from FM here,
-    # mapping them to the date-like keys in the MAMS metadata.
     date_info = {}
 
     if fm_record.release_broadcast_year.strip() != "":
-        date_info["release_broadcast_date"] = fm_record.release_broadcast_year
+        date_info["release_broadcast_date"] = parse_date(
+            fm_record.release_broadcast_year
+        )
     elif fm_record.record_date.strip() != "":
-        date_info["production_date"] = fm_record.record_date
+        date_info["production_date"] = parse_date(fm_record.record_date)
 
     return date_info
 
