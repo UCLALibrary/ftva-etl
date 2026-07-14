@@ -1,4 +1,9 @@
 # Changelog
+## 0.6.0 - 2026-07-14
+
+### Added
+- Added `mams_metadata_ndm.py` module for formatting NDM metadata
+
 ## 0.5.1 - 2026-06-30
 
 ### Changed
