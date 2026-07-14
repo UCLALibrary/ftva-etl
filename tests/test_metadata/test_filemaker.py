@@ -3,6 +3,7 @@ from src.ftva_etl.metadata.filemaker import (
     is_series_production_type,
     get_date_info,
     get_title_info,
+    get_file_path_info,
 )
 from fmrest.record import Record
 
@@ -73,12 +74,17 @@ class TestFilemakerDateInfo(TestCase):
             # only record_date present
             (
                 {"release_broadcast_year": "", "record_date": "11/9/2004"},
-                {"production_date": "11/9/2004"},
+                {"production_date": "2004-11-09"},
             ),
             # neither present
             (
                 {"release_broadcast_year": "", "record_date": ""},
                 {},
+            ),
+            # Value is `Unknown`
+            (
+                {"release_broadcast_year": "Unknown", "record_date": "Unknown"},
+                {"release_broadcast_date": "Unknown"},
             ),
         ]
 
@@ -229,5 +235,67 @@ class TestFilemakerTitleInfo(TestCase):
             with self.subTest(record=record):
                 self.assertDictEqual(
                     get_title_info(record, is_series_production_type(record)),
+                    expected_result,
+                )
+
+
+class TestFilemakerFilePathInfo(TestCase):
+    def setUp(self):
+        # Test cases are tuples, where 1st elem is input file path info,
+        # and 2nd elem is expected result from get_file_path_info().
+        test_cases = [
+            (
+                {
+                    "file_path": "C:\\path\\to\\file.mp4",
+                    "specific_carrier_type": "DCP",
+                },
+                {
+                    "file_name": "",
+                    "folder_name": "path",
+                    "sub_folder_name": "to",
+                    "file_type": "DCP",
+                },
+            ),  # DCP test case
+            (
+                {
+                    "file_path": "C:\\path\\to\\file.mp4",
+                    "specific_carrier_type": "DPX",
+                },
+                {
+                    "file_name": "",
+                    "folder_name": "to",
+                    "file_type": "DPX",
+                },
+            ),  # DPX test case
+            (
+                {
+                    "file_path": "C:\\path\\to\\file.mp4",
+                    "specific_carrier_type": "MOV",
+                },
+                {
+                    "file_name": "file.mp4",
+                },
+            ),  # Non-DCP/DPX test case
+        ]
+        self.test_records = [
+            Record(
+                keys=["recordId", "modId", "file_path", "specific_carrier_type"],
+                values=[
+                    index,
+                    0,
+                    test_case[0]["file_path"],
+                    test_case[0]["specific_carrier_type"],
+                ],
+            )
+            for index, test_case in enumerate(test_cases)
+        ]
+        self.expected_results = [test_case[1] for test_case in test_cases]
+
+    def test_get_file_path_info(self):
+        """Test that `get_file_path_info` correctly extracts file path info from FM records."""
+        for record, expected_result in zip(self.test_records, self.expected_results):
+            with self.subTest(record=record):
+                self.assertDictEqual(
+                    get_file_path_info(record),
                     expected_result,
                 )
