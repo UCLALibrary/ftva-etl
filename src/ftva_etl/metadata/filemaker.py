@@ -255,26 +255,18 @@ def get_file_path_info(fm_record: Record) -> dict:
             if "\\" in raw_value
             else PurePosixPath(raw_value)
         )
-
+    # Raise an error if the value cannot be converted to a path
     except ValueError:
-        logger.warning(
-            f"Filemaker record with record ID {fm_record.recordId} "
-            f"has an invalid `file_path` value: {raw_value}"
-        )
-        return {}
-
-    if fm_record.specific_carrier_type.lower() == "dcp":
+        message = f"Invalid file path '{raw_value}' for record {fm_record.recordId}"
+        logger.error(message)
+        raise ValueError(message)
+    # Same logic for DCP and DPX: `file_name` is always empty,
+    # and `folder_name` is immediate parent of file path
+    if fm_record.specific_carrier_type.lower() in ["dcp", "dpx"]:
         return {
-            "file_name": "",  # always empty for DCP
-            "folder_name": file_path.parents[1].name,  # two levels up
-            "sub_folder_name": file_path.parents[0].name,  # one level up
-            "file_type": "DCP",
-        }
-    elif fm_record.specific_carrier_type.lower() == "dpx":
-        return {
-            "file_name": "",  # always empty for DPX
-            "folder_name": file_path.parents[0].name,  # one level up
-            "file_type": "DPX",
+            "file_name": "",
+            "folder_name": file_path.parent.name,
+            "file_type": fm_record.specific_carrier_type.upper(),
         }
     # If not a DCP or DPX, return just file name
     return {"file_name": file_path.name}

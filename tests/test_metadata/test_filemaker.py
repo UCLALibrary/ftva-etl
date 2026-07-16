@@ -251,8 +251,7 @@ class TestFilemakerFilePathInfo(TestCase):
                 },
                 {
                     "file_name": "",
-                    "folder_name": "path",
-                    "sub_folder_name": "to",
+                    "folder_name": "to",
                     "file_type": "DCP",
                 },
             ),  # DCP test case
