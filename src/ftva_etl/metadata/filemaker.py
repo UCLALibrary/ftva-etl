@@ -220,7 +220,14 @@ def get_media_type(fm_record: Record) -> str:
     :param fm_record: A Filemaker record.
     :return: The media type as a string.
     """
-    return fm_record.media_type
+    # Specs require media type to be one of "Audio", "Image", or "Video",
+    # raising an error if it's not
+    media_type = fm_record.media_type
+    if media_type not in ["Audio", "Image", "Video"]:
+        message = f"Invalid media type '{media_type}' for record {fm_record.recordId}"
+        logger.error(message)
+        raise ValueError(message)
+    return media_type
 
 
 def get_audio_class(fm_record: Record) -> str:
