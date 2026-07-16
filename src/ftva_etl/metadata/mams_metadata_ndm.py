@@ -5,8 +5,8 @@ from pymarc import Record as Pymarc_Record
 from typing import Optional
 from spacy.language import Language
 from .filemaker import (
-    get_inventory_id,
-    get_inventory_number,
+    get_inventory_ids,
+    get_inventory_numbers,
     get_source_ids,
     is_series_production_type,
     get_creators as get_fm_creators,
@@ -57,9 +57,8 @@ def get_mams_metadata_ndm(
 
     # These fields are derived from `fm_inventory_record`...
     fm_inventory_record_metadata = {
-        "inventory_id": get_inventory_id(fm_inventory_record),
-        # MAMS expects list for `inventory_numbers` field
-        "inventory_numbers": [get_inventory_number(fm_inventory_record)],
+        "inventory_ids": get_inventory_ids(fm_inventory_record),
+        "inventory_numbers": get_inventory_numbers(fm_inventory_record),
         "source_ids": get_source_ids(fm_inventory_record),
         "creators": get_fm_creators(fm_inventory_record),
         "language": get_fm_language_name(fm_inventory_record),

@@ -20,6 +20,16 @@ def get_inventory_id(fm_record: Record) -> str:
     return str(fm_record.inventory_id)
 
 
+def get_inventory_ids(fm_record: Record) -> list[str]:
+    """Get the inventory ids from a Filemaker record,
+    parsing comma-separated values into a list of strings.
+
+    :param fm_record: A Filemaker record.
+    :return: A list of inventory ids.
+    """
+    return [inventory_id.strip() for inventory_id in fm_record.inventory_id.split(",")]
+
+
 def get_inventory_number(fm_record: Record) -> str:
     """Get the inventory number from a Filemaker record.
 
@@ -27,6 +37,19 @@ def get_inventory_number(fm_record: Record) -> str:
     :return: The inventory number as a string.
     """
     return fm_record.inventory_no
+
+
+def get_inventory_numbers(fm_record: Record) -> list[str]:
+    """Get the inventory numbers from a Filemaker record,
+    parsing comma-separated values into a list of strings.
+
+    :param fm_record: A Filemaker record.
+    :return: A list of inventory numbers.
+    """
+    return [
+        inventory_number.strip()
+        for inventory_number in fm_record.inventory_number.split(",")
+    ]
 
 
 def is_series_production_type(fm_record: Record) -> bool:
