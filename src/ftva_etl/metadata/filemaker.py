@@ -48,7 +48,7 @@ def get_inventory_numbers(fm_record: Record) -> list[str]:
     """
     return [
         inventory_number.strip()
-        for inventory_number in fm_record.inventory_number.split(",")
+        for inventory_number in fm_record.inventory_no.split(",")
     ]
 
 
