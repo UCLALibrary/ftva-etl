@@ -7,7 +7,7 @@ from spacy.language import Language
 from .filemaker import (
     get_inventory_id,
     get_inventory_number,
-    get_source_id,
+    get_source_ids,
     is_series_production_type,
     get_creators as get_fm_creators,
     get_date_info as get_fm_date_info,
@@ -60,7 +60,7 @@ def get_mams_metadata_ndm(
         "inventory_id": get_inventory_id(fm_inventory_record),
         # MAMS expects list for `inventory_numbers` field
         "inventory_numbers": [get_inventory_number(fm_inventory_record)],
-        "source_id": get_source_id(fm_inventory_record),
+        "source_ids": get_source_ids(fm_inventory_record),
         "creators": get_fm_creators(fm_inventory_record),
         "language": get_fm_language_name(fm_inventory_record),
         "asset_type": get_asset_type(fm_inventory_record),

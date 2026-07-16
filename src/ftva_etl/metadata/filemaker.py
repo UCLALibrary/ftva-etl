@@ -163,13 +163,14 @@ def get_title_info(fm_record: Record, is_series: bool) -> dict:
         return {"title": fm_title}
 
 
-def get_source_id(fm_record: Record) -> str:
-    """Get the source identifier from a Filemaker record.
+def get_source_ids(fm_record: Record) -> list[str]:
+    """Get the source identifiers from a Filemaker record.
 
     :param fm_record: A Filemaker record.
-    :return: The source identifier as a string.
+    :return: A list of source identifiers.
     """
-    return fm_record.source_identifier
+    # `source_identifier` field in FM should have comma-separated values
+    return [source_id.strip() for source_id in fm_record.source_identifier.split(",")]
 
 
 def get_uuid(fm_record: Record) -> str:
