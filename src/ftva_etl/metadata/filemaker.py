@@ -2,7 +2,7 @@ import logging
 
 from fmrest.record import Record
 from pathlib import PureWindowsPath, PurePosixPath
-from .utils import cleanup_production_type, parse_date
+from .utils import cleanup_production_type, parse_date, format_date
 
 
 # Code which extracts data from a Filemaker record.
@@ -184,10 +184,24 @@ def get_uuid(fm_record: Record) -> str:
 def get_creation_date(fm_record: Record) -> str:
     """Get the creation date from a Filemaker record.
 
+    NOTE: this field is derived from FM item records, not inventory records,
+    hence why it's handled separately from the other date fields.
+
     :param fm_record: A Filemaker record.
     :return: The creation date as a string.
     """
-    return fm_record["Creation_date"]  # note capitalization in field name
+    # Specs require `creation_date` to be in "%Y-%m-%d" format,
+    # raising an error if parsing fails.
+    creation_date = format_date(fm_record["Creation_date"], "%Y-%m-%d")
+    if not creation_date:
+        message = (
+            f"Failed to parse creation date '{fm_record["Creation_date"]}' "
+            f"for record {fm_record.recordId}"
+        )
+        logger.error(message)
+        # Specs say to fail batch if any `creation_date` is invalid
+        raise ValueError(message)
+    return creation_date
 
 
 def get_asset_type(fm_record: Record) -> str:

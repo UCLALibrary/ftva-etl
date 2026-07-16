@@ -9,6 +9,21 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
+def format_date(date_string: str, format: str = "%Y-%m-%d") -> str | bool:
+    """Format a date string to a given format.
+
+    :param date_string: The date string to format.
+    :param format: The format to use. Defaults to "%Y-%m-%d".
+    :return: The formatted date string, or False if parsing fails.
+    """
+    try:
+        parsed_date = dateutil.parser.parse(date_string)
+        return parsed_date.strftime(format)
+    except dateutil.parser.ParserError:
+        # Return False if parsing fails
+        return False
+
+
 def _is_imprecise_date(date_string: str) -> bool:
     """Return True if date_string lacks full year-month-day precision.
 
@@ -50,7 +65,8 @@ def parse_date(date_string: str) -> str:
     """Parse a date string into a standardized format.
 
     :param date_string: Date string to parse.
-    :return: Formatted date string or an empty string if parsing fails."""
+    :return: Formatted date string or date string as-is if parsing fails.
+    """
 
     # If the date string is in brackets, remove them temporarily
     # Remember this so we can add them back later
