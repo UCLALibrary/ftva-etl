@@ -27,7 +27,9 @@ def get_inventory_ids(fm_record: Record) -> list[str]:
     :param fm_record: A Filemaker record.
     :return: A list of inventory ids.
     """
-    return [inventory_id.strip() for inventory_id in fm_record.inventory_id.split(",")]
+    return [
+        inventory_id.strip() for inventory_id in str(fm_record.inventory_id).split(",")
+    ]
 
 
 def get_inventory_number(fm_record: Record) -> str:
