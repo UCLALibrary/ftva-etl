@@ -78,7 +78,7 @@ class TestFilemakerDateInfo(TestCase):
             ),
             # only record_date present
             (
-                {"release_broadcast_year": "", "record_date": "11/9/2004"},
+                {"release_broadcast_year": "", "record_date": "2004-11-09"},
                 {"production_date": "2004-11-09"},
             ),
             # neither present
@@ -90,6 +90,26 @@ class TestFilemakerDateInfo(TestCase):
             (
                 {"release_broadcast_year": "Unknown", "record_date": "Unknown"},
                 {"release_broadcast_date": "Unknown"},
+            ),
+            # Value is imprecise (i.e. not year-month-day precision)
+            (
+                {"release_broadcast_year": "", "record_date": "2026-07"},
+                {"production_date": "2026-07"},
+            ),
+            # US-style date should be formatted as YYYY-MM-DD
+            (
+                {"release_broadcast_year": "", "record_date": "11/9/2004"},
+                {"production_date": "2004-11-09"},
+            ),
+            # Brackets should be preserved
+            (
+                {"release_broadcast_year": "[1997]", "record_date": ""},
+                {"release_broadcast_date": "[1997]"},
+            ),
+            # Trailing punctuation and whitespace should be removed
+            (
+                {"release_broadcast_year": " 1994.", "record_date": ""},
+                {"release_broadcast_date": "1994"},
             ),
         ]
 
@@ -324,6 +344,23 @@ class TestFilemakerFilePathInfo(TestCase):
                     expected_result,
                 )
 
+    def test_invalid_file_path_logs_and_raises(self):
+        """Test that non-string file path values log an error then raise TypeError."""
+        record = Record(
+            keys=["recordId", "modId", "file_path"],
+            values=[1, 0, 123],  # `file_path` is an integer, which is invalid
+        )
+        with self.assertLogs(fm_module_logger, level="ERROR") as log_context:
+            with self.assertRaises(TypeError) as error_context:
+                get_file_path_info(record)
+        expected_message = (
+            "File path field must be a string, not <class 'int'> for record 1"
+        )
+        # Assert that the error contains the expected message
+        self.assertIn(expected_message, str(error_context.exception))
+        # Assert that the logs contain the expected message
+        self.assertIn(expected_message, log_context.output[0])
+
 
 class TestFilemakerCreators(TestCase):
     def setUp(self):
@@ -381,7 +418,10 @@ class TestFilemakerCreationDate(TestCase):
         with self.assertLogs(fm_module_logger, level="ERROR") as log_context:
             with self.assertRaises(ValueError) as error_context:
                 get_creation_date(record)
-        expected_message = "Failed to parse creation date 'not-a-date' for record 1"
+        expected_message = (
+            "Failed to parse creation date for record 1: "
+            "'not-a-date' cannot be parsed to a date"
+        )
         # Assert that the error contains the expected message
         self.assertIn(expected_message, str(error_context.exception))
         # Assert that the logs contain the expected message

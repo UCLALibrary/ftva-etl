@@ -9,19 +9,19 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
-def format_date(date_string: str, format: str = "%Y-%m-%d") -> str | bool:
+def format_date(date_string: str, format: str = "%Y-%m-%d") -> str:
     """Format a date string to a given format.
 
     :param date_string: The date string to format.
     :param format: The format to use. Defaults to "%Y-%m-%d".
-    :return: The formatted date string, or False if parsing fails.
+    :return: The formatted date string.
+    :raises ValueError: If the date string cannot be parsed.
     """
     try:
         parsed_date = dateutil.parser.parse(date_string)
         return parsed_date.strftime(format)
     except dateutil.parser.ParserError:
-        # Return False if parsing fails
-        return False
+        raise ValueError(f"'{date_string}' cannot be parsed to a date")
 
 
 def _is_imprecise_date(date_string: str) -> bool:
@@ -65,7 +65,10 @@ def parse_date(date_string: str) -> str:
     """Parse a date string into a standardized format.
 
     :param date_string: Date string to parse.
-    :return: Formatted date string or date string as-is if parsing fails.
+    :return: Formatted date string, meaning:
+    - a date formatted as YYYY-MM-DD if it can be parsed to a date;
+    - the input string with trailing punctuation and whitespace removed
+      if it cannot be parsed to a date, or if it is imprecise (i.e. not year-month-day precision).
     """
 
     # If the date string is in brackets, remove them temporarily
