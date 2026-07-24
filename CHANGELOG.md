@@ -1,4 +1,8 @@
 # Changelog
+## 0.6.1 - 2026-07-24
+### Changed
+- Updated `get_media_type()` logic to classify DPX as "Video" rather than "Image", as MAMS expects
+
 ## 0.6.0 - 2026-07-14
 
 ### Added

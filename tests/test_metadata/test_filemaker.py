@@ -434,8 +434,8 @@ class TestFilemakerMediaType(TestCase):
         for media_type in ["Audio", "Image", "Video"]:
             with self.subTest(media_type=media_type):
                 record = Record(
-                    keys=["recordId", "modId", "media_type"],
-                    values=[1, 0, media_type],
+                    keys=["recordId", "modId", "media_type", "specific_carrier_type"],
+                    values=[1, 0, media_type, ""],  # specific_carrier_type not relevant here
                 )
                 self.assertEqual(get_media_type(record), media_type)
 
@@ -444,8 +444,8 @@ class TestFilemakerMediaType(TestCase):
         for media_type in ["Film", ""]:
             with self.subTest(media_type=media_type):
                 record = Record(
-                    keys=["recordId", "modId", "media_type"],
-                    values=[1, 0, media_type],
+                    keys=["recordId", "modId", "media_type", "specific_carrier_type"],
+                    values=[1, 0, media_type, ""],  # specific_carrier_type not relevant here
                 )
                 with self.assertLogs(fm_module_logger, level="ERROR") as log_context:
                     with self.assertRaises(ValueError) as error_context:
@@ -455,6 +455,14 @@ class TestFilemakerMediaType(TestCase):
                 self.assertIn(expected_message, str(error_context.exception))
                 # Assert that the logs contain the expected message
                 self.assertIn(expected_message, log_context.output[0])
+
+    def test_dpx_media_type_override(self):
+        """Test that DPX media type is overridden to 'Video'."""
+        record = Record(
+            keys=["recordId", "modId", "media_type", "specific_carrier_type"],
+            values=[1, 0, "Image", "DPX"],
+        )
+        self.assertEqual(get_media_type(record), "Video")
 
 
 class TestFilemakerAudioClass(TestCase):
