@@ -268,6 +268,11 @@ def get_media_type(fm_inventory_record: Record) -> str:
         message = f"Invalid media type '{media_type}' for record {fm_inventory_record.recordId}"
         logger.error(message)
         raise ValueError(message)
+    # Special case for DPX: override the media type to "Video".
+    # FTVA's technical metadata tool identifies DPX frames as images, which they are,
+    # but MAMS expects DPX to be classified as video.
+    if fm_inventory_record.specific_carrier_type.lower() == "dpx":
+        media_type = "Video"
     return media_type
 
 
