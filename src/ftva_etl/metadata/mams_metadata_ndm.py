@@ -57,9 +57,12 @@ def get_mams_metadata_ndm(
 
     # These fields are derived from `fm_inventory_record`...
     fm_inventory_record_metadata = {
-        "inventory_ids": get_inventory_ids(fm_inventory_record),
+        # NOTE: The MAMS expects the keys `inventory_id` and `source_identifier` (singular),
+        # even though the values are lists of strings.
+        # We are accepting the inconsistency here because it is difficult to change the MAMS.
+        "inventory_id": get_inventory_ids(fm_inventory_record),
+        "source_identifier": get_source_ids(fm_inventory_record),
         "inventory_numbers": get_inventory_numbers(fm_inventory_record),
-        "source_ids": get_source_ids(fm_inventory_record),
         "creators": get_fm_creators(fm_inventory_record),
         "language": get_fm_language_name(fm_inventory_record),
         "asset_type": get_asset_type(fm_inventory_record),
