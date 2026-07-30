@@ -1,4 +1,11 @@
 # Changelog
+## 0.6.2 - 2026-07-30
+### Changed
+- Updated field names to align with what MAMS expects:
+  - `inventory_ids` -> `inventory_id`
+  - `source_ids` -> `source_identifier`
+  - NOTE: The MAMS expects the keys `inventory_id` and `source_identifier` (singular) for these data fields, even though the values are lists of strings. The keys are not pluralized, but the values are still lists. We are accepting this inconsistency to avoid costly changes in the MAMS.
+
 ## 0.6.1 - 2026-07-24
 ### Changed
 - Updated `get_media_type()` logic to classify DPX as "Video" rather than "Image", as MAMS expects
