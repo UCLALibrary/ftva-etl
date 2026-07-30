@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 @deprecated(
-    "Use `get_inventory_ids()` instead, as MAMS expects `inventory_ids: list[str]`"
+    "Use `get_inventory_ids()` instead, as MAMS expects `inventory_id: list[str]`"
 )
 def get_inventory_id(fm_record: Record) -> str:
     """Get the inventory id from a Filemaker record.
