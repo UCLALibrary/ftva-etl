@@ -437,7 +437,8 @@ class TestFilemakerMediaType(TestCase):
                     keys=["recordId", "modId", "media_type", "specific_carrier_type"],
                     values=[1, 0, media_type, ""],  # specific_carrier_type not relevant here
                 )
-                self.assertEqual(get_media_type(record), media_type)
+                # Output should be lowercased
+                self.assertEqual(get_media_type(record), media_type.lower())
 
     def test_invalid_media_type_logs_and_raises(self):
         """Test that non-allowlisted values log an error then raise ValueError."""
@@ -462,7 +463,7 @@ class TestFilemakerMediaType(TestCase):
             keys=["recordId", "modId", "media_type", "specific_carrier_type"],
             values=[1, 0, "Image", "DPX"],
         )
-        self.assertEqual(get_media_type(record), "Video")
+        self.assertEqual(get_media_type(record), "video")
 
 
 class TestFilemakerAudioClass(TestCase):
