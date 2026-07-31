@@ -261,19 +261,21 @@ def get_media_type(fm_inventory_record: Record) -> str:
     :param fm_inventory_record: A Filemaker inventory record.
     :return: The media type as a string.
     """
-    # Specs require media type to be one of "Audio", "Image", or "Video",
-    # raising an error if it's not
+    # Specs require media type input to be one of "Audio", "Image", or "Video",
+    # raising an error if it's not.
+    # Return value should be lowercased, to match what MAMS expects.
     media_type = fm_inventory_record.media_type
     if media_type not in ["Audio", "Image", "Video"]:
         message = f"Invalid media type '{media_type}' for record {fm_inventory_record.recordId}"
         logger.error(message)
         raise ValueError(message)
-    # Special case for DPX: override the media type to "Video".
+    # Special case for DPX: override the media type to "video".
     # FTVA's technical metadata tool identifies DPX frames as images, which they are,
     # but MAMS expects DPX to be classified as video.
     if fm_inventory_record.specific_carrier_type.lower() == "dpx":
-        media_type = "Video"
-    return media_type
+        media_type = "video"
+    # MAMS expects lowercase value
+    return media_type.lower()
 
 
 def get_audio_class(fm_item_record: Record) -> str:

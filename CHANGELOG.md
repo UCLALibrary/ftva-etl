@@ -1,4 +1,8 @@
 # Changelog
+## 0.6.3 - 2026-07-31
+### Changed
+- Updated `get_media_type()` logic to return lowercased values for media type, as MAMS expects
+
 ## 0.6.2 - 2026-07-30
 ### Changed
 - Updated field names to align with what MAMS expects:
