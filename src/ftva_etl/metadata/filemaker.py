@@ -3,25 +3,11 @@ import logging
 from fmrest.record import Record
 from pathlib import PureWindowsPath, PurePosixPath
 from .utils import cleanup_production_type, parse_date, format_date
-from warnings import deprecated
-
 
 # Code which extracts data from a Filemaker record.
 
 # Create a module logger, which will be a child of the package logger
 logger = logging.getLogger(__name__)
-
-
-@deprecated(
-    "Use `get_inventory_ids()` instead, as MAMS expects `inventory_id: list[str]`"
-)
-def get_inventory_id(fm_record: Record) -> str:
-    """Get the inventory id from a Filemaker record.
-
-    :param fm_record: A Filemaker record.
-    :return: The inventory id as a string.
-    """
-    return str(fm_record.inventory_id)
 
 
 def get_inventory_ids(fm_inventory_record: Record) -> list[str]:
@@ -35,18 +21,6 @@ def get_inventory_ids(fm_inventory_record: Record) -> list[str]:
         inventory_id.strip()
         for inventory_id in str(fm_inventory_record.inventory_id).split(",")
     ]
-
-
-@deprecated(
-    "Use `get_inventory_numbers()` instead, as MAMS expects `inventory_numbers: list[str]`"
-)
-def get_inventory_number(fm_record: Record) -> str:
-    """Get the inventory number from a Filemaker record.
-
-    :param fm_record: A Filemaker record.
-    :return: The inventory number as a string.
-    """
-    return fm_record.inventory_no
 
 
 def get_inventory_numbers(fm_inventory_record: Record) -> list[str]:
