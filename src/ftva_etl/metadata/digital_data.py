@@ -1,6 +1,10 @@
-# Code which extracts data from a Digital Data record.
-# Minimal for now.
+import logging
 from uuid import UUID
+
+# Code which extracts data from a Digital Data record.
+
+# Create a module logger, which will be a child of the package logger
+logger = logging.getLogger(__name__)
 
 
 def get_file_name(dd_record: dict) -> str:
@@ -28,7 +32,20 @@ def get_asset_type(dd_record: dict) -> str:
 
 
 def get_media_type(dd_record: dict) -> str:
-    return dd_record.get("media_type", "")
+    """Get the media type from a Digital Data record.
+
+    :param dd_record: A Digital Data record
+    :return: The media type as a lowercasestring.
+    """
+    # Specs require media type input to be one of "Audio", "Image", or "Video",
+    # raising an error if it's not.
+    # Return value should be lowercased, to match what MAMS expects.
+    media_type = dd_record.get("media_type", "")
+    if media_type not in ["Audio", "Image", "Video"]:
+        message = f"Invalid media type '{media_type}' for record {get_dd_record_id(dd_record)}"
+        logger.error(message)
+        raise ValueError(message)
+    return media_type.lower()
 
 
 def get_dcp_info(dd_record: dict) -> dict:
