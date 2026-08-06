@@ -37,14 +37,13 @@ def get_media_type(dd_record: dict) -> str:
     :param dd_record: A Digital Data record
     :return: The media type as a lowercasestring.
     """
-    # Specs require media type input to be one of "Audio", "Image", or "Video",
-    # raising an error if it's not.
-    # Return value should be lowercased, to match what MAMS expects.
+    # Raise an error if the media type is not one of "audio", "image", or "video"
     media_type = dd_record.get("media_type", "")
-    if media_type not in ["Audio", "Image", "Video"]:
+    if media_type.lower() not in ["audio", "image", "video"]:
         message = f"Invalid media type '{media_type}' for record {get_dd_record_id(dd_record)}"
         logger.error(message)
         raise ValueError(message)
+    # Ensure return value is lowercase, as MAMS expects
     return media_type.lower()
 
 
