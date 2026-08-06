@@ -59,8 +59,7 @@ def get_dcp_info(dd_record: dict) -> dict:
     return {
         # File name must always be empty for DCPs.
         "file_name": "",
-        "folder_name": get_folder_name(dd_record),
-        "sub_folder_name": get_sub_folder_name(dd_record),
+        "folder_name": get_sub_folder_name(dd_record) or get_folder_name(dd_record),
         "file_type": "DCP",  # file type required by MAMS for DCP files
     }
 
