@@ -7,7 +7,7 @@ from src.ftva_etl.metadata.digital_data import (
 
 
 class TestDigitalData(TestCase):
-    def test_dcp_info(self):
+    def test_dcp_info_with_sub_folder(self):
         # Very simple Digital Data record for DCP.
         dcp_record = {
             "file_type": "DCP",
@@ -21,8 +21,27 @@ class TestDigitalData(TestCase):
         self.assertEqual(dcp_info["file_name"], "")
         # Other values should match.
         # Note that these methods may rename some field names, which is intentional.
+        # If a sub folder name is present, it should be used in place of the folder name.
+        self.assertEqual(dcp_info["folder_name"], "sub folder name")
+        # `file_type` should be "DCP"
+        self.assertEqual(dcp_info["file_type"], "DCP")
+
+    def test_dcp_info_without_sub_folder(self):
+        # Very simple Digital Data record for DCP.
+        dcp_record = {
+            "file_type": "DCP",
+            "file_name": "not relevant",
+            "file_folder_name": "folder name",
+            "sub_folder_name": "",
+        }
+
+        dcp_info = get_dcp_info(dcp_record)
+        # File name must be empty.
+        self.assertEqual(dcp_info["file_name"], "")
+        # Other values should match.
+        # Note that these methods may rename some field names, which is intentional.
+        # If there isno sub-folder name, the folder name should be used.
         self.assertEqual(dcp_info["folder_name"], "folder name")
-        self.assertEqual(dcp_info["sub_folder_name"], "sub folder name")
         # `file_type` should be "DCP"
         self.assertEqual(dcp_info["file_type"], "DCP")
 

@@ -59,7 +59,8 @@ def get_mams_metadata_ndm(
     fm_inventory_record_metadata = {
         # NOTE: The MAMS expects the keys `inventory_id` and `source_identifier` (singular),
         # even though the values are lists of strings.
-        # We are accepting the inconsistency here because it is difficult to change the MAMS.
+        # This is inconsistent with the use of `inventory_numbers` (plural),
+        # but we are accepting the inconsistency here because it is difficult to change the MAMS.
         "inventory_id": get_inventory_ids(fm_inventory_record),
         "source_identifier": get_source_ids(fm_inventory_record),
         "inventory_numbers": get_inventory_numbers(fm_inventory_record),

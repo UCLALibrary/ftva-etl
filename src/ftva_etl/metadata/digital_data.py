@@ -1,6 +1,10 @@
-# Code which extracts data from a Digital Data record.
-# Minimal for now.
+import logging
 from uuid import UUID
+
+# Code which extracts data from a Digital Data record.
+
+# Create a module logger, which will be a child of the package logger
+logger = logging.getLogger(__name__)
 
 
 def get_file_name(dd_record: dict) -> str:
@@ -28,7 +32,19 @@ def get_asset_type(dd_record: dict) -> str:
 
 
 def get_media_type(dd_record: dict) -> str:
-    return dd_record.get("media_type", "")
+    """Get the media type from a Digital Data record.
+
+    :param dd_record: A Digital Data record
+    :return: The media type as a lowercasestring.
+    """
+    # Raise an error if the media type is not one of "audio", "image", or "video"
+    media_type = dd_record.get("media_type", "")
+    if media_type.lower() not in ["audio", "image", "video"]:
+        message = f"Invalid media type '{media_type}' for record {get_dd_record_id(dd_record)}"
+        logger.error(message)
+        raise ValueError(message)
+    # Ensure return value is lowercase, as MAMS expects
+    return media_type.lower()
 
 
 def get_dcp_info(dd_record: dict) -> dict:
@@ -42,8 +58,7 @@ def get_dcp_info(dd_record: dict) -> dict:
     return {
         # File name must always be empty for DCPs.
         "file_name": "",
-        "folder_name": get_folder_name(dd_record),
-        "sub_folder_name": get_sub_folder_name(dd_record),
+        "folder_name": get_sub_folder_name(dd_record) or get_folder_name(dd_record),
         "file_type": "DCP",  # file type required by MAMS for DCP files
     }
 

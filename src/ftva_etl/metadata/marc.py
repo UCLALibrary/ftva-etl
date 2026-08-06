@@ -134,6 +134,7 @@ def _parse_creators(source_string: str, model: Language) -> list[str]:
         "director",  # This will also match "directors" or "producer-director"
         "a film by",
         "supervised by",
+        "filmmaker",
     ]
 
     # Find the first attribution phrase in the source string,

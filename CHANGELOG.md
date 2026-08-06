@@ -1,4 +1,10 @@
 # Changelog
+
+## 0.7.0 - 2026-08-06
+### Changed
+- Refactored legacy `mams_metadata.py` to mirror NDM `mams_metadata_ndm.py` module
+- Updated logic to align with current specs
+
 ## 0.6.3 - 2026-07-31
 ### Changed
 - Updated `get_media_type()` logic to return lowercased values for media type, as MAMS expects
