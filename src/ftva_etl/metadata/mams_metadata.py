@@ -70,12 +70,11 @@ def get_mams_metadata(
 
     # These are the fields from Filemaker
     filemaker_fields = {
+        # NOTE: The MAMS expects the key `inventory_id` (singular),
+        # even though the value is a list of strings.
+        # This is inconsistent with the use of `inventory_numbers` (plural),
+        # but we are accepting the inconsistency here because it is difficult to change the MAMS.
         "inventory_id": get_inventory_ids(filemaker_record),
-        # All records returned from FM
-        # should have only one inventory number for now,
-        # but MAMS expects an array in JSON, so wrap in a list.
-        # TODO: Parse comma-separated or otherwise delimited inventory numbers
-        # from FM or other sources, if needed.
         "inventory_numbers": get_inventory_numbers(filemaker_record),
         "creators": get_fm_creators(filemaker_record),
         "language": get_fm_language_name(filemaker_record),
