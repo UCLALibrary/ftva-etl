@@ -62,7 +62,10 @@ def get_mams_metadata_ndm(
         # This is inconsistent with the use of `inventory_numbers` (plural),
         # but we are accepting the inconsistency here because it is difficult to change the MAMS.
         "inventory_id": get_inventory_ids(fm_inventory_record),
-        "source_identifier": get_source_ids(fm_inventory_record),
+        **(
+            {"source_identifier": get_source_ids(fm_inventory_record)}
+            if get_source_ids(fm_inventory_record) else {}
+        ),  # only include `source_identifier` if value is non-empty list
         "inventory_numbers": get_inventory_numbers(fm_inventory_record),
         "creators": get_fm_creators(fm_inventory_record),
         "language": get_fm_language_name(fm_inventory_record),

@@ -205,6 +205,7 @@ def get_source_ids(fm_inventory_record: Record) -> list[str]:
     return [
         source_id.strip()
         for source_id in fm_inventory_record.source_identifier.split(",")
+        if source_id.strip()  # only include non-empty strings
     ]
 
 
