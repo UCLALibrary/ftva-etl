@@ -9,6 +9,7 @@ from src.ftva_etl.metadata.filemaker import (
     get_creation_date,
     get_media_type,
     get_audio_class,
+    get_source_ids,
 )
 from fmrest.record import Record
 
@@ -435,7 +436,12 @@ class TestFilemakerMediaType(TestCase):
             with self.subTest(media_type=media_type):
                 record = Record(
                     keys=["recordId", "modId", "media_type", "specific_carrier_type"],
-                    values=[1, 0, media_type, ""],  # specific_carrier_type not relevant here
+                    values=[
+                        1,
+                        0,
+                        media_type,
+                        "",
+                    ],  # specific_carrier_type not relevant here
                 )
                 # Output should be lowercased
                 self.assertEqual(get_media_type(record), media_type.lower())
@@ -446,7 +452,12 @@ class TestFilemakerMediaType(TestCase):
             with self.subTest(media_type=media_type):
                 record = Record(
                     keys=["recordId", "modId", "media_type", "specific_carrier_type"],
-                    values=[1, 0, media_type, ""],  # specific_carrier_type not relevant here
+                    values=[
+                        1,
+                        0,
+                        media_type,
+                        "",
+                    ],  # specific_carrier_type not relevant here
                 )
                 with self.assertLogs(fm_module_logger, level="ERROR") as log_context:
                     with self.assertRaises(ValueError) as error_context:
@@ -480,3 +491,22 @@ class TestFilemakerAudioClass(TestCase):
                     values=[1, 0, audio_class],
                 )
                 self.assertEqual(get_audio_class(record), expected)
+
+
+class TestFilemakerSourceIdentifier(TestCase):
+    def test_get_source_ids(self):
+        """Test that source identifiers are correctly parsed from a comma-separated string."""
+        test_cases = [
+            ("id1,id2,id3", ["id1", "id2", "id3"]),
+            ("id1, id2 , id3", ["id1", "id2", "id3"]),
+            ("id1", ["id1"]),
+            ("", []),  # empty string should result in an empty list
+            (", ,", []),  # multiple empty entries should result in an empty list
+        ]
+        for source_identifier, expected in test_cases:
+            with self.subTest(source_identifier=source_identifier):
+                record = Record(
+                    keys=["recordId", "modId", "source_identifier"],
+                    values=[1, 0, source_identifier],
+                )
+                self.assertEqual(get_source_ids(record), expected)
