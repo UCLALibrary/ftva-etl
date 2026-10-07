@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1 - 2026-10-06
+### Changed
+- Updated Filemaker NDM logic to only output `source_identifier` when it is a non-empty list
+
 ## 0.7.0 - 2026-08-06
 ### Changed
 - Refactored legacy `mams_metadata.py` to mirror NDM `mams_metadata_ndm.py` module
