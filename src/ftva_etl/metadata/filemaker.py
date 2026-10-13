@@ -292,13 +292,21 @@ def get_file_path_info(fm_item_record: Record) -> dict:
         )
         logger.error(message)
         raise TypeError(message)
-    # Same logic for DCP and DPX: `file_name` is always empty,
-    # and `folder_name` is immediate parent of file path
-    if fm_item_record.specific_carrier_type.lower() in ["dcp", "dpx"]:
+
+    # MediaInfo stores `wrapper_format: OP-Atom` for DCPs.
+    # Use this field to handle DCPs specifically.
+    if fm_item_record.wrapper_format == "OP-Atom":
         return {
             "file_name": "",
             "folder_name": file_path.parent.name,
-            "file_type": fm_item_record.specific_carrier_type.upper(),
+            "file_type": "DCP",
+        }
+    # Use `specific_carrier_type` field for DPXs.
+    if fm_item_record.specific_carrier_type.lower() == "dpx":
+        return {
+            "file_name": "",
+            "folder_name": file_path.parent.name,
+            "file_type": "DPX",
         }
     # If not a DCP or DPX, return just file name
     return {"file_name": file_path.name}
