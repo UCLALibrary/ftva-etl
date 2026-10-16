@@ -1,4 +1,5 @@
 import logging
+import re
 
 from fmrest.record import Record
 from pathlib import PureWindowsPath, PurePosixPath
@@ -69,7 +70,13 @@ def get_language_name(fm_inventory_record: Record) -> str:
     :return: The language name as a string.
     """
     # NOTE: field name is capitalized in FM
-    return fm_inventory_record.Language
+    fm_value = fm_inventory_record.Language
+    # Return the fm_value with language codes in parentheses removed from end,
+    # if present, e.g. `English (en)` -> `English`.
+    # The pattern replaces parentheses, any surrounding whitespace,
+    # and the content of the parentheses with empty string.
+    pattern = r"\s*\([^)]*\)\s*$"
+    return re.sub(pattern, "", fm_value).strip()
 
 
 def get_date_info(fm_inventory_record: Record) -> dict:

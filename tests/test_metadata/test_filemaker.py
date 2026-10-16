@@ -10,6 +10,7 @@ from src.ftva_etl.metadata.filemaker import (
     get_media_type,
     get_audio_class,
     get_source_ids,
+    get_language_name,
 )
 from fmrest.record import Record
 
@@ -520,3 +521,22 @@ class TestFilemakerSourceIdentifier(TestCase):
                     values=[1, 0, source_identifier],
                 )
                 self.assertEqual(get_source_ids(record), expected)
+
+
+class TestFilemakerLanguage(TestCase):
+    def test_get_language_name(self):
+        """Test that language names are correctly parsed and cleaned."""
+        test_cases = [
+            ("English (en)", "English"),  # basic case
+            ("Vietnamese (vit)", "Vietnamese"),  # three-letter code
+            ("French (fr) ", "French"),  # trailing whitespace after parens
+            ("Spanish ()", "Spanish"),  # empty parentheses
+            ("   ", ""),  # multiple whitespaces only
+        ]
+        for fm_value, expected in test_cases:
+            with self.subTest(fm_value=fm_value):
+                record = Record(
+                    keys=["recordId", "modId", "Language"],
+                    values=[1, 0, fm_value],
+                )
+                self.assertEqual(get_language_name(record), expected)
