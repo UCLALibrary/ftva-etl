@@ -1,0 +1,8 @@
+# Compose file for GitHub Actions
+# In this case, very basic: just build the Docker image and keep the container running.
+# Using Compose for consistency with other projects.
+services:
+  ftva_etl:
+    build: .
+    # Keep the container running until stopped via docker compose.
+    command: "sleep infinity"
