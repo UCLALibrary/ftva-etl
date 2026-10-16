@@ -273,18 +273,20 @@ class TestFilemakerFilePathInfo(TestCase):
             (
                 {
                     "file_path": "C:\\path\\to\\file.mp4",
-                    "specific_carrier_type": "DCP",
+                    "specific_carrier_type": "",
+                    "wrapper_format": "OP-Atom",
                 },
                 {
                     "file_name": "",
                     "folder_name": "to",
                     "file_type": "DCP",
                 },
-            ),  # DCP test case
+            ),  # DCP test case--set from `wrapper_format`
             (
                 {
                     "file_path": "C:\\path\\to\\file.mp4",
                     "specific_carrier_type": "DPX",
+                    "wrapper_format": "",
                 },
                 {
                     "file_name": "",
@@ -296,6 +298,7 @@ class TestFilemakerFilePathInfo(TestCase):
                 {
                     "file_path": "C:\\path\\to\\file.mp4",
                     "specific_carrier_type": "MOV",
+                    "wrapper_format": "",
                 },
                 {
                     "file_name": "file.mp4",
@@ -305,6 +308,7 @@ class TestFilemakerFilePathInfo(TestCase):
                 {
                     "file_path": "/path/to/file.mov",
                     "specific_carrier_type": "MOV",
+                    "wrapper_format": "",
                 },
                 {
                     "file_name": "file.mov",
@@ -313,23 +317,29 @@ class TestFilemakerFilePathInfo(TestCase):
             (
                 {
                     "file_path": "C:\\path\\to\\file.mp4",
-                    "specific_carrier_type": "dcp",
+                    "specific_carrier_type": "DCP",
+                    "wrapper_format": "",
                 },
                 {
-                    "file_name": "",
-                    "folder_name": "to",
-                    "file_type": "DCP",
+                    "file_name": "file.mp4",
                 },
-            ),  # Lowercase DCP test case
+            ),  # DCP in `specific_carrier_type` is ignored
         ]
         self.test_records = [
             Record(
-                keys=["recordId", "modId", "file_path", "specific_carrier_type"],
+                keys=[
+                    "recordId",
+                    "modId",
+                    "file_path",
+                    "specific_carrier_type",
+                    "wrapper_format",
+                ],
                 values=[
                     index,
                     0,
                     test_case[0]["file_path"],
                     test_case[0]["specific_carrier_type"],
+                    test_case[0]["wrapper_format"],
                 ],
             )
             for index, test_case in enumerate(test_cases)
