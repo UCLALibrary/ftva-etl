@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.3 - 2026-10-16
+### Changed
+- Updated Filemaker getter for `Language` field to strip language codes in parentheses from the end of the value, e.g. `English (en)` -> `English`.
+
 ## 0.7.2 - 2026-10-16
 ### Changed
 - Updated Filemaker NDM logic to use `wrapper_format` rather than `specific_carrier_type` for determining if asset is DCP
