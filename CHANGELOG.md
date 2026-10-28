@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.4 - 2026-10-28
+### Changed
+- Added `allow_compilation` parameter to Filemaker getter for title info to allow compilation titles for NDM records
+
 ## 0.7.3 - 2026-10-16
 ### Changed
 - Updated Filemaker getter for `Language` field to strip language codes in parentheses from the end of the value, e.g. `English (en)` -> `English`.
