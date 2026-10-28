@@ -138,14 +138,17 @@ def is_compilation(fm_inventory_record: Record) -> bool:
     return False
 
 
-def get_title_info(fm_inventory_record: Record, is_series: bool) -> dict:
+def get_title_info(
+    fm_inventory_record: Record, is_series: bool, allow_compilation: bool = False
+) -> dict:
     """Get the title info from a Filemaker inventory record.
 
     :param fm_inventory_record: A Filemaker inventory record.
     :param is_series: Whether the record is a series.
+    :param allow_compilation: Whether compilations are allowed.
     :return: A dict containing the title info.
     """
-    if is_compilation(fm_inventory_record):
+    if not allow_compilation and is_compilation(fm_inventory_record):
         logger.info(
             f"Record with inventory id {fm_inventory_record.inventory_id} "
             "is identified as a compilation. "

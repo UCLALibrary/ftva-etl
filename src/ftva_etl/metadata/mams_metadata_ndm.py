@@ -64,14 +64,16 @@ def get_mams_metadata_ndm(
         "inventory_id": get_inventory_ids(fm_inventory_record),
         **(
             {"source_identifier": get_source_ids(fm_inventory_record)}
-            if get_source_ids(fm_inventory_record) else {}
+            if get_source_ids(fm_inventory_record)
+            else {}
         ),  # only include `source_identifier` if value is non-empty list
         "inventory_numbers": get_inventory_numbers(fm_inventory_record),
         "creators": get_fm_creators(fm_inventory_record),
         "language": get_fm_language_name(fm_inventory_record),
         "asset_type": get_asset_type(fm_inventory_record),
         "media_type": get_media_type(fm_inventory_record),
-        **get_fm_title_info(fm_inventory_record, is_series),
+        # Allow title info for compilations for NDM
+        **get_fm_title_info(fm_inventory_record, is_series, allow_compilation=True),
         **get_fm_date_info(fm_inventory_record),
     }
 

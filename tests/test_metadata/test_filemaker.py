@@ -145,9 +145,9 @@ class TestFilemakerTitleInfo(TestCase):
         # Test cases are tuples, where 1st elem is input title info,
         # and 2nd elem is expected result from get_title_info().
 
-        test_cases = [
+        test_cases_legacy = [
             # Specs to test:
-            # - If production type indicates compilation, return empty dict.
+            # - If title or production_type indicates compilation, return empty dict.
             # - If title is empty, return empty dict.
             # - If title is present and production type indicates a series,
             #   return a title, series title, and episode title (if present).
@@ -231,7 +231,7 @@ class TestFilemakerTitleInfo(TestCase):
                 },
             ),
         ]
-        self.test_records = [
+        self.test_records_legacy = [
             Record(
                 keys=[
                     "recordId",
@@ -252,16 +252,73 @@ class TestFilemakerTitleInfo(TestCase):
                     test_case[0].get("episode no.", ""),
                 ],
             )
-            for index, test_case in enumerate(test_cases)
+            for index, test_case in enumerate(test_cases_legacy)
         ]
-        self.expected_results = [test_case[1] for test_case in test_cases]
+        self.expected_results_legacy = [test_case[1] for test_case in test_cases_legacy]
 
-    def test_get_title_info(self):
-        """Test that `get_title_info` correctly extracts title info from FM records."""
-        for record, expected_result in zip(self.test_records, self.expected_results):
+        test_cases_ndm = [
+            # Specs to test:
+            # - If title or production_type indicates compilation, title passes through.
+            # - Other cases overlap with legacy FM records, so aren't repeated here.
+            (
+                {
+                    "production_type": "compilation\rfoo\rbar",
+                    "title": "Some Title 1",
+                },
+                {"title": "Some Title 1"},
+            ),
+            (
+                {
+                    "production_type": "foo\rbar",
+                    "title": "Contains a Compilation Keyword",
+                },
+                {"title": "Contains a Compilation Keyword"},
+            ),
+        ]
+        self.test_records_ndm = [
+            Record(
+                keys=[
+                    "recordId",
+                    "inventory_id",  # added for use in logging in get_title_info()
+                    "modId",
+                    "production_type",
+                    "title",
+                ],
+                values=[
+                    index,
+                    index,
+                    0,
+                    test_case[0]["production_type"],
+                    test_case[0].get("title", ""),
+                ],
+            )
+            for index, test_case in enumerate(test_cases_ndm)
+        ]
+        self.expected_results_ndm = [test_case[1] for test_case in test_cases_ndm]
+
+    def test_get_title_info_legacy(self):
+        """Test that `get_title_info` correctly extracts title info for legacy FM records."""
+        for record, expected_result in zip(
+            self.test_records_legacy, self.expected_results_legacy
+        ):
             with self.subTest(record=record):
                 self.assertDictEqual(
                     get_title_info(record, is_series_production_type(record)),
+                    expected_result,
+                )
+
+    def test_get_title_info_ndm(self):
+        """Test that `get_title_info` correctly extracts title info for NDM FM records."""
+        for record, expected_result in zip(
+            self.test_records_ndm, self.expected_results_ndm
+        ):
+            with self.subTest(record=record):
+                self.assertDictEqual(
+                    get_title_info(
+                        record,
+                        is_series_production_type(record),
+                        allow_compilation=True,  # NDM specs allow compilation titles
+                    ),
                     expected_result,
                 )
 
