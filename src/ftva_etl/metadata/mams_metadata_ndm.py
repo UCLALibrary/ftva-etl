@@ -72,7 +72,7 @@ def get_mams_metadata_ndm(
         "language": get_fm_language_name(fm_inventory_record),
         "asset_type": get_asset_type(fm_inventory_record),
         "media_type": get_media_type(fm_inventory_record),
-        # Allow title info for compilationsfor NDM
+        # Allow title info for compilations for NDM
         **get_fm_title_info(fm_inventory_record, is_series, allow_compilation=True),
         **get_fm_date_info(fm_inventory_record),
     }
